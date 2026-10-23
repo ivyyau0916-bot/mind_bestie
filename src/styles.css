@@ -1,0 +1,876 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Noto Sans TC", system-ui, sans-serif;
+  --font-display: "Noto Serif TC", serif;
+  --font-card-serif: "Noto Serif HK", "Noto Serif TC", ui-serif, serif;
+  --font-card-hand: "Caveat", "Noto Sans TC", cursive;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-amber: var(--amber);
+  --color-sky: var(--sky);
+  --color-storm: var(--storm);
+  --color-online: var(--online);
+  --color-bubble-user: var(--bubble-user);
+  --color-bubble-ai: var(--bubble-ai);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+}
+
+/* Light ("dawn") theme */
+:root {
+  --radius: 1rem;
+  --background: oklch(0.97 0.012 270);
+  --foreground: oklch(0.25 0.06 275);
+  --card: oklch(1 0 0 / 0.8);
+  --card-foreground: oklch(0.25 0.06 275);
+  --popover: oklch(0.99 0.005 270);
+  --popover-foreground: oklch(0.25 0.06 275);
+  --primary: oklch(0.45 0.16 275);
+  --primary-foreground: oklch(0.98 0.01 270);
+  --secondary: oklch(0.92 0.025 270);
+  --secondary-foreground: oklch(0.3 0.07 275);
+  --muted: oklch(0.93 0.02 270);
+  --muted-foreground: oklch(0.5 0.04 270);
+  --accent: oklch(0.8 0.15 75);
+  --accent-foreground: oklch(0.25 0.06 60);
+  --destructive: oklch(0.58 0.22 27);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.88 0.025 270);
+  --input: oklch(0.88 0.025 270);
+  --ring: oklch(0.55 0.15 275);
+  --amber: oklch(0.78 0.16 70);
+  --sky: oklch(0.72 0.11 230);
+  --storm: oklch(0.5 0.06 265);
+  --online: oklch(0.6 0.15 155);
+  --bubble-user: #4f46e5;
+  --bubble-ai: #ffffff;
+  --chat-header-bg: rgb(255 255 255 / 0.7);
+  --chat-footer-bg: rgb(255 255 255 / 0.75);
+  --chat-area-bg: linear-gradient(to bottom, #eff6ff 0%, rgb(238 242 255 / 0.3) 45%, #f8fafc 100%);
+  --bubble-outgoing-bg: #4f46e5;
+  --bubble-outgoing-fg: #ffffff;
+  --bubble-incoming-bg: #ffffff;
+  --bubble-incoming-fg: #1e293b;
+  --bubble-incoming-border: transparent;
+  --bubble-incoming-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+  --bubble-outgoing-shadow: 0 1px 3px rgb(79 70 229 / 0.25);
+  --chart-1: oklch(0.78 0.16 70);
+  --chart-2: oklch(0.72 0.11 230);
+  --chart-3: oklch(0.55 0.15 275);
+  --chart-4: oklch(0.65 0.12 300);
+  --chart-5: oklch(0.6 0.1 180);
+  --gradient-sky: linear-gradient(165deg, #eff6ff 0%, #eef2ff 40%, #f8fafc 100%);
+  --glow-amber: 0 0 40px -8px color-mix(in oklab, var(--amber) 60%, transparent);
+  --shadow-soft: 0 12px 40px -16px color-mix(in oklab, var(--primary) 35%, transparent);
+}
+
+/* Night (default) theme */
+.dark {
+  --background: #0f172a;
+  --foreground: oklch(0.95 0.015 270);
+  --card: oklch(0.27 0.055 272 / 0.7);
+  --card-foreground: oklch(0.95 0.015 270);
+  --popover: oklch(0.25 0.055 272);
+  --popover-foreground: oklch(0.95 0.015 270);
+  --primary: oklch(0.8 0.15 75);
+  --primary-foreground: oklch(0.22 0.05 275);
+  --secondary: oklch(0.32 0.06 270);
+  --secondary-foreground: oklch(0.93 0.02 270);
+  --muted: oklch(0.3 0.05 270);
+  --muted-foreground: oklch(0.72 0.04 265);
+  --accent: oklch(0.72 0.11 230);
+  --accent-foreground: oklch(0.2 0.05 275);
+  --destructive: oklch(0.68 0.19 22);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(1 0 0 / 0.1);
+  --input: oklch(1 0 0 / 0.14);
+  --ring: oklch(0.8 0.15 75);
+  --bubble-user: #6366f1;
+  --bubble-ai: #242f4d;
+  --chat-header-bg: rgb(24 32 53 / 0.8);
+  --chat-footer-bg: rgb(24 32 53 / 0.85);
+  --chat-area-bg: #0f172a;
+  --bubble-outgoing-bg: #6366f1;
+  --bubble-outgoing-fg: #ffffff;
+  --bubble-incoming-bg: #242f4d;
+  --bubble-incoming-fg: #f1f5f9;
+  --bubble-incoming-border: rgb(51 65 85 / 0.5);
+  --bubble-incoming-shadow: none;
+  --bubble-outgoing-shadow: 0 1px 3px rgb(99 102 241 / 0.35);
+  --online: oklch(0.75 0.17 155);
+  --gradient-sky: linear-gradient(180deg, #182035 0%, #0f172a 55%, #0b1220 100%);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html { font-family: var(--font-sans); }
+  body {
+    background: var(--gradient-sky);
+    background-attachment: fixed;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    min-height: 100dvh;
+  }
+}
+
+@utility glass {
+  background-color: var(--color-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-soft);
+}
+
+@utility glow-amber {
+  box-shadow: var(--glow-amber);
+}
+
+@keyframes float-slow { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+@utility animate-float { animation: float-slow 5s ease-in-out infinite; }
+
+/* Bestie healing chat — 晨曦淡藍 / 靜謐夜空 (not WhatsApp) */
+@utility bestie-chat-shell {
+  background: var(--chat-area-bg);
+}
+
+@utility bestie-chat-header {
+  background: var(--chat-header-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid color-mix(in oklab, var(--color-border) 80%, transparent);
+}
+
+@utility bestie-chat-footer {
+  background: var(--chat-footer-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid color-mix(in oklab, var(--color-border) 80%, transparent);
+}
+
+@utility chat-wallpaper {
+  background: var(--chat-area-bg);
+}
+
+@utility bubble-outgoing {
+  background-color: var(--bubble-outgoing-bg);
+  color: var(--bubble-outgoing-fg);
+  box-shadow: var(--bubble-outgoing-shadow);
+}
+
+@utility bubble-incoming {
+  background-color: var(--bubble-incoming-bg);
+  color: var(--bubble-incoming-fg);
+  border: 1px solid var(--bubble-incoming-border);
+  box-shadow: var(--bubble-incoming-shadow);
+}
+
+/* Daily soul card page */
+@keyframes bestie-star-twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.15); }
+}
+
+@utility daily-card-page {
+  position: relative;
+  overflow: hidden;
+  /* Fixed shell — does not follow Bestie persona */
+  background: linear-gradient(165deg, #eff6ff 0%, #eef2ff 35%, #fdf4ff 70%, #f8fafc 100%);
+}
+
+.dark .daily-card-page {
+  background: radial-gradient(ellipse 120% 80% at 50% -10%, #1e293b 0%, #0f172a 45%, #0b1220 100%);
+}
+
+@utility daily-card-canvas {
+  position: relative;
+  background-image:
+    radial-gradient(ellipse 90% 60% at 20% 0%, rgb(255 247 237 / 0.55), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 85% 100%, rgb(254 243 199 / 0.35), transparent 50%);
+}
+
+.dark .daily-card-canvas {
+  /* Persona gradients from daily-card-persona-theme supply the night-sky card surface */
+  background-image: none;
+}
+
+@utility daily-card-paper-grain {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+}
+
+@utility daily-card-stars {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, rgb(255 255 255 / 0.9), transparent),
+    radial-gradient(1px 1px at 30% 65%, rgb(196 181 253 / 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 70% 30%, rgb(253 224 71 / 0.7), transparent),
+    radial-gradient(1px 1px at 85% 75%, rgb(255 255 255 / 0.75), transparent),
+    radial-gradient(1px 1px at 50% 50%, rgb(165 180 252 / 0.6), transparent);
+  animation: bestie-star-twinkle 4s ease-in-out infinite;
+}
+
+.dark .daily-card-stars {
+  opacity: 0.7;
+}
+
+@utility daily-card-flip {
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transition: transform 0.85s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+@utility daily-card-flip-open {
+  transform: rotateY(180deg);
+}
+
+@utility daily-card-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+@utility daily-card-face-back {
+  transform: rotateY(0deg);
+}
+
+@utility daily-card-face-front {
+  transform: rotateY(180deg);
+}
+
+/* After flip animation: drop 3D (fixes iOS mirror / back-text bleed) while keeping the same visual */
+.daily-card-flip-settled {
+  transform: none;
+  -webkit-transform: none;
+  transition: none;
+}
+
+.daily-card-flip-settled .daily-card-face-back {
+  display: none;
+}
+
+.daily-card-flip-settled .daily-card-face-front {
+  transform: none;
+  -webkit-transform: none;
+}
+
+.daily-card-theme-transition {
+  transition:
+    background-color 0.55s ease,
+    background-image 0.55s ease,
+    border-color 0.55s ease,
+    box-shadow 0.55s ease,
+    color 0.45s ease,
+    ring-color 0.45s ease;
+}
+
+/* Soul card PNG export — solid backgrounds, no blur (html-to-image) */
+.soul-card-export-capture {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.soul-card-export-capture.daily-card-canvas {
+  background-image: none !important;
+}
+
+/* 晨曦 — warm dawn board (all personas) + accent by role */
+.soul-card-export-capture--light {
+  background-color: #fdf8f6 !important;
+  background-image: linear-gradient(to bottom right, #fff1f2 0%, #f8fafc 48%, #faf5ff 100%) !important;
+  border-color: rgb(244 114 182 / 0.32) !important;
+  box-shadow: 0 8px 28px rgb(148 84 159 / 0.14) !important;
+}
+
+.soul-card-export-capture--light .soul-card-export-title {
+  color: #1e293b !important;
+}
+
+.soul-card-export-capture--light .soul-card-export-muted {
+  color: #64748b !important;
+}
+
+.soul-card-export-capture--light .soul-card-export-quote {
+  color: #1e293b !important;
+  text-shadow: none;
+}
+
+.soul-card-export-capture--light .soul-card-export-body {
+  color: #334155 !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="gentle"] {
+  border-color: rgb(244 114 182 / 0.42) !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="gentle"] .soul-card-export-quote {
+  color: #881337 !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="gentle"] .soul-card-export-mark,
+.soul-card-export-capture--light[data-soul-card-persona="gentle"] .soul-card-export-divider {
+  color: rgb(190 24 93 / 0.45) !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="gentle"] .soul-card-export-insight {
+  background: rgb(255 241 242 / 0.95) !important;
+  border-left-color: rgb(244 114 182 / 0.55) !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="gentle"] .soul-card-export-insight-title {
+  color: #9d174d !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="fierce"] {
+  border-color: rgb(217 119 6 / 0.4) !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="fierce"] .soul-card-export-quote {
+  color: #78350f !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="fierce"] .soul-card-export-mark,
+.soul-card-export-capture--light[data-soul-card-persona="fierce"] .soul-card-export-divider {
+  color: rgb(180 83 9 / 0.48) !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="fierce"] .soul-card-export-insight {
+  background: rgb(255 251 235 / 0.95) !important;
+  border-left-color: rgb(245 158 11 / 0.55) !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="fierce"] .soul-card-export-insight-title {
+  color: #92400e !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="wise"] {
+  border-color: rgb(14 116 144 / 0.38) !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="wise"] .soul-card-export-quote {
+  color: #0f4c5c !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="wise"] .soul-card-export-mark,
+.soul-card-export-capture--light[data-soul-card-persona="wise"] .soul-card-export-divider {
+  color: rgb(8 145 178 / 0.45) !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="wise"] .soul-card-export-insight {
+  background: rgb(236 254 255 / 0.95) !important;
+  border-left-color: rgb(6 182 212 / 0.5) !important;
+}
+
+.soul-card-export-capture--light[data-soul-card-persona="wise"] .soul-card-export-insight-title {
+  color: #0e7490 !important;
+}
+
+/* 夜空 — persona night gradients + glow type */
+.soul-card-export-capture--dark[data-soul-card-persona="gentle"] {
+  background-color: #1a0f1f !important;
+  background-image: linear-gradient(to bottom right, #4c0519 0%, #581c87 45%, #0f172a 100%) !important;
+  border-color: rgb(244 114 182 / 0.48) !important;
+  box-shadow: 0 0 22px rgb(244 114 182 / 0.32) !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="gentle"] .soul-card-export-title {
+  color: #f8fafc !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="gentle"] .soul-card-export-muted {
+  color: #e2e8f0 !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="gentle"] .soul-card-export-quote {
+  color: #fff1f2 !important;
+  text-shadow: 0 0 16px rgb(244 114 182 / 0.5);
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="gentle"] .soul-card-export-mark {
+  color: rgb(249 168 212 / 0.65) !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="gentle"] .soul-card-export-divider {
+  color: rgb(244 114 182 / 0.75) !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="gentle"] .soul-card-export-insight {
+  background: rgb(255 255 255 / 0.1) !important;
+  border-left-color: rgb(244 114 182 / 0.65) !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="gentle"] .soul-card-export-insight-title {
+  color: #fce7f3 !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="gentle"] .soul-card-export-body {
+  color: #f1f5f9 !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="fierce"] {
+  background-color: #1a1208 !important;
+  background-image: linear-gradient(to bottom right, #451a03 0%, #9a3412 42%, #0f172a 100%) !important;
+  border-color: rgb(251 191 36 / 0.48) !important;
+  box-shadow: 0 0 22px rgb(251 191 36 / 0.3) !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="fierce"] .soul-card-export-title {
+  color: #f8fafc !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="fierce"] .soul-card-export-muted {
+  color: #e2e8f0 !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="fierce"] .soul-card-export-quote {
+  color: #fffbeb !important;
+  text-shadow: 0 0 16px rgb(251 191 36 / 0.48);
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="fierce"] .soul-card-export-mark {
+  color: rgb(252 211 77 / 0.7) !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="fierce"] .soul-card-export-divider {
+  color: rgb(251 191 36 / 0.78) !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="fierce"] .soul-card-export-insight {
+  background: rgb(255 255 255 / 0.1) !important;
+  border-left-color: rgb(251 191 36 / 0.65) !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="fierce"] .soul-card-export-insight-title {
+  color: #fef3c7 !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="fierce"] .soul-card-export-body {
+  color: #f1f5f9 !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="wise"] {
+  background-color: #071824 !important;
+  background-image: linear-gradient(to bottom right, #083344 0%, #115e59 42%, #0f172a 100%) !important;
+  border-color: rgb(34 211 238 / 0.48) !important;
+  box-shadow: 0 0 22px rgb(34 211 238 / 0.28) !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="wise"] .soul-card-export-title {
+  color: #f8fafc !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="wise"] .soul-card-export-muted {
+  color: #e2e8f0 !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="wise"] .soul-card-export-quote {
+  color: #f0fdfa !important;
+  text-shadow: 0 0 16px rgb(34 211 238 / 0.45);
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="wise"] .soul-card-export-mark {
+  color: rgb(103 232 249 / 0.68) !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="wise"] .soul-card-export-divider {
+  color: rgb(34 211 238 / 0.75) !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="wise"] .soul-card-export-insight {
+  background: rgb(255 255 255 / 0.1) !important;
+  border-left-color: rgb(34 211 238 / 0.65) !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="wise"] .soul-card-export-insight-title {
+  color: #cffafe !important;
+}
+
+.soul-card-export-capture--dark[data-soul-card-persona="wise"] .soul-card-export-body {
+  color: #f1f5f9 !important;
+}
+
+@keyframes self-care-sparkle-burst {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.15);
+  }
+}
+
+.self-care-sparkle-particle {
+  animation: self-care-sparkle-burst 650ms ease-out forwards;
+}
+
+@keyframes self-care-jar-pulse {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.self-care-jar-dot {
+  animation: self-care-jar-pulse 2.8s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@keyframes self-care-fly-to-jar {
+  0% {
+    transform: translate(-50%, -50%) scale(0.35);
+    opacity: 0.95;
+    box-shadow: 0 0 10px rgb(251 191 36 / 0.85);
+  }
+  70% {
+    opacity: 1;
+    box-shadow: 0 0 16px rgb(253 224 71 / 0.95);
+  }
+  100% {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.95);
+    opacity: 0.15;
+    box-shadow: 0 0 22px rgb(251 191 36 / 0.55);
+  }
+}
+
+.self-care-flying-glow {
+  background: radial-gradient(circle, rgb(254 240 138 / 0.95) 0%, rgb(251 191 36 / 0.65) 45%, transparent 72%);
+  animation: self-care-fly-to-jar 820ms cubic-bezier(0.22, 0.85, 0.28, 1) forwards;
+}
+
+@keyframes self-care-jar-float-a {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(1px, -2px);
+  }
+}
+
+@keyframes self-care-jar-float-b {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-1.5px, -1px);
+  }
+}
+
+@keyframes self-care-jar-float-c {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(1px, 1.5px);
+  }
+}
+
+.self-care-jar-float-a {
+  animation: self-care-jar-float-a 3.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.self-care-jar-float-b {
+  animation: self-care-jar-float-b 4.1s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.self-care-jar-float-c {
+  animation: self-care-jar-float-c 3.3s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes self-care-jar-full-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px rgb(251 191 36 / 0.35));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgb(251 191 36 / 0.65));
+  }
+}
+
+.self-care-jar-full svg {
+  animation: self-care-jar-full-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes self-care-calendar-pulse-ring {
+  0% {
+    opacity: 0.65;
+    transform: scale(0.85);
+    box-shadow: 0 0 0 0 rgb(251 191 36 / 0.45);
+  }
+  70% {
+    opacity: 0;
+    transform: scale(1.35);
+    box-shadow: 0 0 0 10px rgb(251 191 36 / 0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+.self-care-calendar-pulse {
+  animation: self-care-calendar-pulse-ring 1.1s ease-out forwards;
+  border-radius: 0.5rem;
+  background: rgb(251 191 36 / 0.12);
+}
+
+@keyframes self-care-nudge-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  85% {
+    opacity: 1;
+    transform: translate(-50%, -2px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+}
+
+.self-care-nudge-bubble {
+  animation: self-care-nudge-float 2.6s ease-in-out forwards;
+}
+
+@keyframes chat-typing-bounce {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.chat-typing-dot {
+  display: block;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background-color: rgb(148 163 184 / 0.95);
+  animation: chat-typing-bounce 1.15s ease-in-out infinite;
+}
+
+.dark .chat-typing-dot {
+  background-color: rgb(203 213 225 / 0.85);
+}
+
+.chat-typing-dot-delay-1 {
+  animation-delay: 0.15s;
+}
+
+.chat-typing-dot-delay-2 {
+  animation-delay: 0.3s;
+}
+
+@keyframes chat-bubble-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-bubble-reveal {
+  animation: chat-bubble-reveal 0.38s cubic-bezier(0.22, 0.84, 0.32, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-bubble-reveal {
+    animation: none;
+  }
+
+  .chat-typing-dot {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+@keyframes self-care-milestone-glow {
+  0% {
+    opacity: 0.35;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+}
+
+.self-care-milestone-dialog {
+  position: relative;
+}
+
+.self-care-milestone-glow {
+  background: radial-gradient(circle at 50% 30%, rgb(251 191 36 / 0.35), transparent 55%),
+    radial-gradient(circle at 20% 80%, rgb(196 181 253 / 0.28), transparent 50%);
+  animation: self-care-milestone-glow 2.4s ease-in-out infinite;
+}
+
+/* 偏好設定 Modal — 居中懸浮卡片與內容滾動 */
+.bestie-preferences-backdrop {
+  padding-top: max(1rem, env(safe-area-inset-top, 0px));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
+
+.bestie-preferences-sheet {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: min(80vh, calc(100dvh - 2rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
+}
+
+.bestie-preferences-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(168 162 158 / 0.45) transparent;
+}
+
+.bestie-preferences-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.bestie-preferences-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bestie-preferences-scroll::-webkit-scrollbar-thumb {
+  background: rgb(168 162 158 / 0.4);
+  border-radius: 999px;
+}
+
+.dark .bestie-preferences-scroll {
+  scrollbar-color: rgb(120 113 108 / 0.5) transparent;
+}
+
+.dark .bestie-preferences-scroll::-webkit-scrollbar-thumb {
+  background: rgb(120 113 108 / 0.45);
+}
+
+@utility bestie-scroll-touch {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+@utility bestie-gpu-layer {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Mobile performance — reduce blur, glow, and continuous animations (< md) */
+@media (max-width: 767px) {
+  :is(.backdrop-blur-sm, .backdrop-blur-md, .backdrop-blur-lg, .backdrop-blur-\[2px\]) {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .animate-float {
+    animation: none !important;
+  }
+
+  .daily-card-stars {
+    animation: none !important;
+    opacity: 0.35;
+  }
+
+  .daily-card-page .perspective-\[1200px\] {
+    perspective: 900px;
+  }
+
+  .daily-card-page .daily-card-flip {
+    transition-duration: 0.5s;
+    will-change: transform;
+  }
+
+  .daily-card-page .daily-card-face {
+    will-change: transform;
+  }
+
+  .self-care-jar-float-a,
+  .self-care-jar-float-b,
+  .self-care-jar-float-c,
+  .self-care-jar-dot,
+  .self-care-jar-full svg,
+  .self-care-milestone-glow {
+    animation: none !important;
+    filter: none !important;
+  }
+
+  .self-care-calendar-today-complete {
+    box-shadow: 0 1px 4px rgb(251 191 36 / 0.25) !important;
+  }
+
+  .chat-bubble-reveal {
+    animation-duration: 0.22s;
+  }
+}
