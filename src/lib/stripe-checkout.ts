@@ -1,6 +1,6 @@
 import { markStripeCheckoutPending } from "@/lib/vip-subscription";
 
-export const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_3cI4gydftcOkghl8xB1ck00";
+export const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/7sY4gy1AH48q21X2hQ2Ji01";
 
 export function getStripePaymentLink(): string {
   const fromEnv = import.meta.env.VITE_STRIPE_PAYMENT_LINK?.trim();
