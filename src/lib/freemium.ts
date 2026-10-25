@@ -1,4 +1,5 @@
 import type { PersonaId } from "@/lib/chat-personas";
+import { canAccessCharacter, isInRegistrationTrial, personaToCharacterId } from "@/lib/trial-limits";
 
 export const FREE_DAILY_CHAT_LIMIT = 20;
 export const TRIAL_CHAT_LIMIT_PER_PERSONA = 5;
@@ -137,23 +138,47 @@ export function isPersonaTrialLocked(persona: PersonaId, isVip: boolean): boolea
   return getTrialMessagesUsed(persona) >= TRIAL_CHAT_LIMIT_PER_PERSONA;
 }
 
-/** Daily card & settings persona pickers — premium roles require VIP. */
-export function isPersonaUnlocked(persona: PersonaId, isVip: boolean): boolean {
-  if (isVip) return true;
-  return persona === "gentle";
+/** Daily card & settings persona pickers — VIP 或 3 天試用期內全解鎖。 */
+export function isPersonaUnlocked(
+  persona: PersonaId,
+  isVip: boolean,
+  createdAt?: string | null,
+): boolean {
+  return canAccessCharacter(personaToCharacterId(persona), isVip, createdAt).allowed;
 }
 
-/** Chat — free users may trial fierce/wise until per-persona limit. */
-export function isPersonaChatUnlocked(persona: PersonaId, isVip: boolean): boolean {
+/** Chat — 試用期內全角色可選；試用期後 fierce/wise 另有 5 則試用。 */
+export function isPersonaChatUnlocked(
+  persona: PersonaId,
+  isVip: boolean,
+  createdAt?: string | null,
+): boolean {
+  if (!canAccessCharacter(personaToCharacterId(persona), isVip, createdAt).allowed) return false;
   if (isVip) return true;
+  if (isInRegistrationTrial(false, createdAt)) return true;
   if (persona === "gentle") return true;
   return !isPersonaTrialLocked(persona, false);
 }
 
-/** Free-user send gate: gentle uses daily pool; fierce/wise use per-persona trial. */
-export function canSendChatAsFreeUser(persona: PersonaId, now = new Date()): boolean {
+/** Free-user send gate: 試用期內共用每日 20 次；否則 gentle 用每日池、fierce/wise 用各 5 則試用。 */
+export function canSendChatAsFreeUser(
+  persona: PersonaId,
+  createdAt?: string | null,
+  now = new Date(),
+): boolean {
+  if (!isPersonaChatUnlocked(persona, false, createdAt)) return false;
+  if (isInRegistrationTrial(false, createdAt)) return canSendFreeChat(false, now);
   if (persona === "gentle") return canSendFreeChat(false, now);
   return getTrialMessagesUsed(persona) < TRIAL_CHAT_LIMIT_PER_PERSONA;
+}
+
+/** 非 VIP 發送後遞增用量（試用期內一律計入每日 20 次）。 */
+export function recordFreeChatSend(persona: PersonaId, createdAt?: string | null): void {
+  if (isInRegistrationTrial(false, createdAt) || persona === "gentle") {
+    incrementDailyChatCount();
+    return;
+  }
+  incrementTrialChatCount(persona);
 }
 
 export function incrementTrialChatCount(persona: PersonaId): number {
@@ -258,4 +283,11 @@ export function saveDailyCardDraw(
   const store = readDailyCardDrawHistory();
   store[persona][today] = { id: card.id, quote: card.quote };
   writeDailyCardDrawHistory(store);
+}
+export function getPersonaTrialState(createdAt?: string | null, isVip?: boolean) {
+  if (isVip) return { isUnlocked: true, remaining: "無限" as const };
+  if (isInRegistrationTrial(false, createdAt)) {
+    return { isUnlocked: true, remaining: "試用中" as const };
+  }
+  return { isUnlocked: false, remaining: "已用完" as const };
 }

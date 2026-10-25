@@ -38,21 +38,33 @@ describe("Freemium daily chat limits", () => {
     expect(canSendFreeChat(true)).toBe(true);
   });
 
-  it("locks premium personas for daily card until VIP", () => {
-    expect(isPersonaUnlocked("gentle", false)).toBe(true);
-    expect(isPersonaUnlocked("fierce", false)).toBe(false);
-    expect(isPersonaUnlocked("wise", true)).toBe(true);
+  it("locks premium personas after registration trial unless VIP or in trial", () => {
+    const afterTrial = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString();
+    expect(isPersonaUnlocked("gentle", false, afterTrial)).toBe(true);
+    expect(isPersonaUnlocked("fierce", false, afterTrial)).toBe(false);
+    expect(isPersonaUnlocked("fierce", false, null)).toBe(true);
+    expect(isPersonaUnlocked("wise", true, afterTrial)).toBe(true);
   });
 
-  it("allows chat trial for fierce and wise until limit", () => {
-    expect(isPersonaChatUnlocked("fierce", false)).toBe(true);
-    expect(isPersonaChatUnlocked("wise", false)).toBe(true);
-    for (let i = 0; i < TRIAL_CHAT_LIMIT_PER_PERSONA; i++) incrementTrialChatCount("fierce");
-    expect(isPersonaTrialLocked("fierce", false)).toBe(true);
-    expect(isPersonaChatUnlocked("fierce", false)).toBe(false);
-    expect(canSendChatAsFreeUser("fierce")).toBe(false);
-    expect(getTrialMessagesRemaining("wise", false)).toBe(TRIAL_CHAT_LIMIT_PER_PERSONA);
-    expect(canSendChatAsFreeUser("gentle")).toBe(true);
+  it("locks premium chat personas after registration trial until VIP", () => {
+    const afterTrial = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString();
+    expect(isPersonaChatUnlocked("fierce", false, afterTrial)).toBe(false);
+    expect(isPersonaChatUnlocked("wise", false, afterTrial)).toBe(false);
+    expect(isPersonaChatUnlocked("gentle", false, afterTrial)).toBe(true);
+    expect(canSendChatAsFreeUser("fierce", afterTrial)).toBe(false);
+    expect(canSendChatAsFreeUser("gentle", afterTrial)).toBe(true);
+  });
+
+  it("unlocks all chat personas during registration trial", () => {
+    expect(isPersonaChatUnlocked("fierce", false, null)).toBe(true);
+    expect(isPersonaChatUnlocked("wise", false, null)).toBe(true);
+  });
+
+  it("uses shared daily pool for all personas during registration trial", () => {
+    for (let i = 0; i < FREE_DAILY_CHAT_LIMIT; i++) incrementDailyChatCount();
+    expect(canSendChatAsFreeUser("fierce", null)).toBe(false);
+    expect(canSendChatAsFreeUser("wise", null)).toBe(false);
+    expect(canSendChatAsFreeUser("gentle", null)).toBe(false);
   });
 
   it("tracks daily draws independently per Bestie role", () => {

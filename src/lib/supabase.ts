@@ -43,11 +43,15 @@ export function getSupabaseClient(): SupabaseClient | null {
 export type BestieAuthUser = {
   id: string;
   email: string | null;
+  /** Supabase Auth `user.created_at` — 用於 3 天註冊試用判定 */
+  created_at?: string | null;
 };
 
-export function mapSupabaseUser(user: { id: string; email?: string | null } | null): BestieAuthUser | null {
+export function mapSupabaseUser(
+  user: { id: string; email?: string | null; created_at?: string | null } | null,
+): BestieAuthUser | null {
   if (!user) return null;
-  return { id: user.id, email: user.email ?? null };
+  return { id: user.id, email: user.email ?? null, created_at: user.created_at ?? null };
 }
 
 export function getAuthRedirectUrl(path = "/profile"): string {

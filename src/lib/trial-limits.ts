@@ -1,81 +1,61 @@
-// 角色 ID 型別
+// src/lib/trial-limits.ts
+
+import type { PersonaId } from "@/lib/chat-personas";
+
 export type CharacterId = "gentle" | "sarcastic" | "rational";
 
-const DAILY_CHAT_LIMIT = 20;
 const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
 
-/**
- * 1. 取得或初始化「首次訪問時間」
- */
-export function getFirstVisitTime(userCreatedAt?: string | null): number {
-  if (userCreatedAt) {
-    return new Date(userCreatedAt).getTime();
-  }
-  let localTime = localStorage.getItem("app_first_visit_time");
-  if (!localTime) {
-    localTime = new Date().toISOString();
-    localStorage.setItem("app_first_visit_time", localTime);
-  }
-  return new Date(localTime).getTime();
+export function personaToCharacterId(persona: PersonaId): CharacterId {
+  if (persona === "fierce") return "sarcastic";
+  if (persona === "wise") return "rational";
+  return "gentle";
+}
+
+/** 註冊後 3 天試用（非 VIP）；無 created_at 視為本機測試帳號，仍在試用內。 */
+export function isInRegistrationTrial(isVip: boolean, createdAt?: string | null): boolean {
+  if (isVip) return false;
+  if (!createdAt) return true;
+  const createdTime = new Date(createdAt).getTime();
+  if (!Number.isFinite(createdTime)) return true;
+  return Date.now() - createdTime < THREE_DAYS_MS;
 }
 
 /**
- * 2. 檢查是否在 3 天試用期內
- */
-export function isWithin3DaysTrial(userCreatedAt?: string | null): boolean {
-  const startTime = getFirstVisitTime(userCreatedAt);
-  const now = Date.now();
-  return (now - startTime) <= THREE_DAYS_MS;
-}
-
-/**
- * 3. 檢查角色訪問權限（適用於聊天頁面切換 & 抽卡頁面）
+ * 檢查用戶是否可以存取該角色（前 3 天享有完整試用期，之後非 VIP 僅能使用溫柔/gentle）
  */
 export function canAccessCharacter(
   characterId: CharacterId,
-  isVip: boolean = false,
-  userCreatedAt?: string | null
-): { allowed: boolean; reason?: "REQUIRE_VIP_OR_LOGIN" } {
-  // 溫柔 Bestie 永遠免費開放
-  if (characterId === "gentle") {
-    return { allowed: true };
-  }
-
-  // VIP 用戶解鎖全部
+  isVip: boolean,
+  createdAt?: string | null
+): { allowed: boolean; reason?: string } {
+  // 1. 如果是 VIP，直接全部開放
   if (isVip) {
     return { allowed: true };
   }
 
-  // 前 3 天試用期內開放毒舌與理智
-  if (isWithin3DaysTrial(userCreatedAt)) {
+  // 2. 溫柔角色永久免費開放
+  if (characterId === "gentle") {
     return { allowed: true };
   }
 
-  // 超過 3 天且非 VIP -> 鎖定
-  return { allowed: false, reason: "REQUIRE_VIP_OR_LOGIN" };
-}
+  // 3. 針對毒舌 (sarcastic) 與理智 (rational) 角色，檢查 3 天試用期
+  // 如果沒有建立時間（例如本機測試帳號），為了方便測試，預設視為「在試用期內（允許免費使用）」！
+  if (!createdAt) {
+    return { allowed: true };
+  }
 
-/**
- * 4. 檢查當天剩餘聊天次數
- */
-export function getRemainingChatCount(characterId: CharacterId, isVip: boolean = false): number {
-  if (isVip) return 999; // VIP 無限聊天
+  const createdTime = new Date(createdAt).getTime();
+  const now = Date.now();
+  const isInTrial = now - createdTime < THREE_DAYS_MS;
 
-  const today = new Date().toISOString().split("T")[0];
-  const key = `chat_count_${characterId}_${today}`;
-  const count = parseInt(localStorage.getItem(key) || "0", 10);
+  if (isInTrial) {
+    return { allowed: true };
+  }
 
-  return Math.max(0, DAILY_CHAT_LIMIT - count);
-}
-
-/**
- * 5. 記錄發送了一條訊息 (次數 +1)
- */
-export function incrementChatCount(characterId: CharacterId, isVip: boolean = false) {
-  if (isVip) return;
-
-  const today = new Date().toISOString().split("T")[0];
-  const key = `chat_count_${characterId}_${today}`;
-  const count = parseInt(localStorage.getItem(key) || "0", 10);
-  localStorage.setItem(key, (count + 1).toString());
+  // 超過 3 天且非 VIP 則鎖定
+  return { 
+    allowed: false, 
+    reason: "3 天試用期已過，升級 VIP 即可解鎖完整對話與抽卡權限 ✨" 
+  };
 }

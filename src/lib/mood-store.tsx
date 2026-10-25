@@ -4,12 +4,13 @@ import { detectUserCrisis, getCrisisSafeReply } from "@/lib/crisis-intervention"
 import {
   canSendChatAsFreeUser,
   getDailyChatCount,
-  incrementDailyChatCount,
-  incrementTrialChatCount,
   isPersonaChatUnlocked,
+  recordFreeChatSend,
   remainingFreeChats,
   resetDailyChatIfNeeded,
 } from "@/lib/freemium";
+import { readPersistedAuthUser } from "@/lib/supabase-auth-callback";
+import { isInRegistrationTrial } from "@/lib/trial-limits";
 import {
   activateVipMembership,
   clearVipMembership,
@@ -167,7 +168,8 @@ export function MoodProvider({ children }: { children: ReactNode }) {
         setVipStartDate(vip ? readVipStartDate() : null);
         if (vip && !readStoredIsVip()) activateVipMembership();
         let nextPersona = isPersonaId(d.persona) ? d.persona : "gentle";
-        if (!isPersonaChatUnlocked(nextPersona, vip)) nextPersona = "gentle";
+        const createdAt = readPersistedAuthUser()?.created_at;
+        if (!isPersonaChatUnlocked(nextPersona, vip, createdAt)) nextPersona = "gentle";
         personaRef.current = nextPersona;
         setPersonaState(nextPersona);
       } else {
@@ -220,15 +222,16 @@ export function MoodProvider({ children }: { children: ReactNode }) {
     const isCrisis = detectUserCrisis(trimmed);
     const vip = isVipRef.current;
     const activePersona = personaRef.current;
-    if (!isCrisis && !vip && !canSendChatAsFreeUser(activePersona)) {
-      return { ok: false, reason: activePersona === "gentle" ? "quota" : "trial" };
+    const createdAt = readPersistedAuthUser()?.created_at;
+    if (!isCrisis && !vip && !canSendChatAsFreeUser(activePersona, createdAt)) {
+      const inTrial = isInRegistrationTrial(false, createdAt);
+      const usesDailyPool = inTrial || activePersona === "gentle";
+      return { ok: false, reason: usesDailyPool ? "quota" : "trial" };
     }
     if (!isCrisis && !vip) {
-      if (activePersona === "gentle") {
-        incrementDailyChatCount();
-        setDailyChatCount(getDailyChatCount());
-      } else {
-        incrementTrialChatCount(activePersona);
+      recordFreeChatSend(activePersona, createdAt);
+      setDailyChatCount(getDailyChatCount());
+      if (!isInRegistrationTrial(false, createdAt) && activePersona !== "gentle") {
         setTrialUsageRevision((v) => v + 1);
       }
     }
@@ -310,7 +313,8 @@ export function MoodProvider({ children }: { children: ReactNode }) {
 
   const setPersona = (next: PersonaId) => {
     if (next === personaRef.current) return true;
-    if (!isPersonaChatUnlocked(next, isVipRef.current)) return false;
+    const createdAt = readPersistedAuthUser()?.created_at;
+    if (!isPersonaChatUnlocked(next, isVipRef.current, createdAt)) return false;
     personaRef.current = next;
     setPersonaState(next);
     // Keep old bubbles; only swap the untouched welcome, otherwise drop in a live handoff in the new voice.

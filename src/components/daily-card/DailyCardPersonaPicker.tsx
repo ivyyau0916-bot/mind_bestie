@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 type DailyCardPersonaPickerProps = {
   persona: PersonaId;
   isVip: boolean;
+  createdAt?: string | null;
   disabled?: boolean;
   onSelect: (persona: PersonaId) => void;
   onLockedSelect: () => void;
@@ -16,6 +17,7 @@ type DailyCardPersonaPickerProps = {
 export function DailyCardPersonaPicker({
   persona,
   isVip,
+  createdAt,
   disabled,
   onSelect,
   onLockedSelect,
@@ -28,7 +30,7 @@ export function DailyCardPersonaPicker({
     >
       {PERSONAS.map((item) => {
         if (!isPersonaId(item.id)) return null;
-        const locked = !isPersonaUnlocked(item.id, isVip);
+        const locked = !isPersonaUnlocked(item.id, isVip, createdAt);
         const selected = persona === item.id;
         const itemTheme = getDailyCardPersonaTheme(item.id);
         return (
