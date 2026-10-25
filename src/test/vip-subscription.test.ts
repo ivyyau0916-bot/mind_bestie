@@ -56,7 +56,7 @@ describe("VIP subscription storage", () => {
     expect(readStoredIsVip()).toBe(false);
   });
 
-  it("grants VIP when returning from Stripe referrer with pending checkout", () => {
+  it("does not grant VIP from Stripe referrer alone (requires success URL or server entitlement)", () => {
     window.history.replaceState({}, "", "/chat");
     markStripeCheckoutPending();
     const originalDescriptor = Object.getOwnPropertyDescriptor(document, "referrer");
@@ -66,17 +66,25 @@ describe("VIP subscription storage", () => {
     });
     try {
       const result = processStripeCheckoutReturn();
-      expect(result.activated).toBe(true);
-      expect(readStoredIsVip()).toBe(true);
+      expect(result.activated).toBe(false);
+      expect(result.promptPaymentConfirm).toBe(true);
+      expect(readStoredIsVip()).toBe(false);
     } finally {
       if (originalDescriptor) Object.defineProperty(document, "referrer", originalDescriptor);
       else Object.defineProperty(document, "referrer", { configurable: true, value: "" });
     }
   });
 
-  it("resolveVipActive keeps local VIP when server entitlement is false", () => {
+  it("does not treat stale local VIP as checkout activation on reload", () => {
     activateVipMembership();
-    expect(resolveVipActive(false)).toBe(true);
+    window.history.replaceState({}, "", "/auth/callback?code=test");
+    const result = processStripeCheckoutReturn();
+    expect(result.activated).toBe(false);
+  });
+
+  it("resolveVipActive trusts server entitlement only after login sync", () => {
+    activateVipMembership();
+    expect(resolveVipActive(false)).toBe(false);
     expect(resolveVipActive(true)).toBe(true);
   });
 

@@ -14,7 +14,6 @@ import { isInRegistrationTrial } from "@/lib/trial-limits";
 import {
   activateVipMembership,
   clearVipMembership,
-  processStripeCheckoutReturn,
   readStoredIsVip,
   readVipStartDate,
 } from "@/lib/vip-subscription";
@@ -157,7 +156,6 @@ export function MoodProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    processStripeCheckoutReturn();
     try {
       const raw = localStorage.getItem(KEY);
       if (raw) {
@@ -165,29 +163,22 @@ export function MoodProvider({ children }: { children: ReactNode }) {
         setMessages(d.messages?.length ? d.messages : [WELCOME]);
         setEntries(d.entries ?? []);
         setThemeState(d.theme ?? "light");
-        const vip = Boolean(d.isVip) || readStoredIsVip();
-        isVipRef.current = vip;
-        setIsVipState(vip);
-        setVipStartDate(vip ? readVipStartDate() : null);
-        if (vip && !readStoredIsVip()) activateVipMembership();
+        // VIP is synced from Supabase after auth / Stripe success — not from stale local flags on boot.
+        isVipRef.current = false;
+        setIsVipState(false);
+        setVipStartDate(null);
         let nextPersona = isPersonaId(d.persona) ? d.persona : "gentle";
         const createdAt = readPersistedAuthUser()?.created_at;
-        if (!isPersonaChatUnlocked(nextPersona, vip, createdAt)) nextPersona = "gentle";
+        if (!isPersonaChatUnlocked(nextPersona, false, createdAt)) nextPersona = "gentle";
         personaRef.current = nextPersona;
         setPersonaState(nextPersona);
       } else {
         setEntries(seedEntries());
-        const vip = readStoredIsVip();
-        if (vip) {
-          isVipRef.current = true;
-          setIsVipState(true);
-          setVipStartDate(readVipStartDate());
-        }
       }
     } catch {
       setEntries(seedEntries());
     }
-    syncUsage(isVipRef.current);
+    syncUsage(false);
     setLoaded(true);
   }, []);
 

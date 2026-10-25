@@ -183,22 +183,9 @@ export function processStripeCheckoutReturn(now = Date.now()): StripeCheckoutRet
   }
 
   const celebrateOnly = consumeVipCheckoutCelebrationPending();
-  if (readStoredIsVip()) {
-    return {
-      activated: true,
-      showCelebration: celebrateOnly,
-      promptPaymentConfirm: false,
-    };
-  }
 
   if (!isRecentStripeCheckoutPending(now)) {
     return { activated: false, showCelebration: celebrateOnly, promptPaymentConfirm: false };
-  }
-
-  // Only trust return from Stripe itself — never grant VIP on bare /chat or /profile (e.g. Magic Link login).
-  if (isLikelyStripeCheckoutReferrer()) {
-    completeCheckoutVipActivation();
-    return { activated: true, showCelebration: true, promptPaymentConfirm: false };
   }
 
   const onReturnPath = STRIPE_RETURN_PATH.test(window.location.pathname);
@@ -206,7 +193,7 @@ export function processStripeCheckoutReturn(now = Date.now()): StripeCheckoutRet
     return { activated: false, showCelebration: false, promptPaymentConfirm: true };
   }
 
-  return { activated: false, showCelebration: false, promptPaymentConfirm: false };
+  return { activated: false, showCelebration: celebrateOnly, promptPaymentConfirm: false };
 }
 
 /** @deprecated Prefer processStripeCheckoutReturn */
@@ -225,7 +212,7 @@ export function consumeVipCheckoutCelebrationPending(): boolean {
   return pending;
 }
 
-/** VIP for UI: Supabase entitlement or local Stripe return activation. */
+/** VIP for UI after login: trust Supabase entitlement only (not stale localStorage). */
 export function resolveVipActive(entitledFromServer: boolean): boolean {
-  return entitledFromServer || readStoredIsVip();
+  return entitledFromServer;
 }

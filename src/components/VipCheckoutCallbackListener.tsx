@@ -5,16 +5,12 @@ import { fetchActiveAuthEmail } from "@/lib/bestie-auth-session";
 import { useBestieAuth } from "@/lib/bestie-auth-context";
 import { syncVipAfterCheckoutReturn } from "@/lib/vip-entitlement";
 import { useMood } from "@/lib/mood-store";
-import {
-  confirmStripeCheckoutPaymentCompleted,
-  processStripeCheckoutReturn,
-  readStoredIsVip,
-} from "@/lib/vip-subscription";
+import { confirmStripeCheckoutPaymentCompleted, processStripeCheckoutReturn } from "@/lib/vip-subscription";
 
 /** Stripe return handler (query params, referrer, or bare /chat success URL). */
 export function VipCheckoutCallbackListener() {
   const { setIsVip } = useMood();
-  const { refreshVipFromAccount, loading: authLoading } = useBestieAuth();
+  const { refreshVipFromAccount } = useBestieAuth();
   const [celebrateOpen, setCelebrateOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const handledRef = useRef(false);
@@ -33,6 +29,7 @@ export function VipCheckoutCallbackListener() {
       void (async () => {
         const email = await fetchActiveAuthEmail();
         await syncVipAfterCheckoutReturn(email);
+        await refreshVipFromAccount();
       })();
     }
     if (result.showCelebration) {
@@ -41,16 +38,7 @@ export function VipCheckoutCallbackListener() {
     if (result.promptPaymentConfirm) {
       setConfirmOpen(true);
     }
-  }, [setIsVip]);
-
-  useEffect(() => {
-    if (authLoading || !readStoredIsVip()) return;
-    void (async () => {
-      const email = await fetchActiveAuthEmail();
-      await syncVipAfterCheckoutReturn(email);
-      await refreshVipFromAccount();
-    })();
-  }, [authLoading, refreshVipFromAccount]);
+  }, [setIsVip, refreshVipFromAccount]);
 
   const handleConfirmPaid = () => {
     confirmStripeCheckoutPaymentCompleted();

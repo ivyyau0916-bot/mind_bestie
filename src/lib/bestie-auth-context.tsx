@@ -21,8 +21,8 @@ import {
   readPersistedAuthUser,
   writePersistedAuthUser,
 } from "@/lib/supabase-auth-callback";
-import { fetchVipEntitlementByEmail } from "@/lib/vip-entitlement";
-import { processStripeCheckoutReturn, readStoredIsVip, resolveVipActive } from "@/lib/vip-subscription";
+import { applyVipEntitlementForSession } from "@/lib/vip-entitlement";
+import { clearVipMembership } from "@/lib/vip-subscription";
 import { useMood } from "@/lib/mood-store";
 
 type BestieAuthContextValue = {
@@ -48,18 +48,22 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<BestieAuthUser | null>(() => readPersistedAuthUser());
   const [authOpen, setAuthOpen] = useState(false);
 
+  const syncVipAfterAuth = useCallback(
+    async (email: string | null | undefined) => {
+      const entitled = await applyVipEntitlementForSession(email);
+      setIsVip(entitled);
+    },
+    [setIsVip],
+  );
+
   const applySessionUser = useCallback(
     async (next: BestieAuthUser | null, options?: { closeAuthDialog?: boolean }) => {
       setUser(next);
       writePersistedAuthUser(next);
-      let entitled = false;
-      if (next?.email) {
-        entitled = await fetchVipEntitlementByEmail(next.email);
-      }
-      setIsVip(resolveVipActive(entitled));
+      await syncVipAfterAuth(next?.email ?? null);
       if (options?.closeAuthDialog) setAuthOpen(false);
     },
-    [setIsVip],
+    [syncVipAfterAuth],
   );
 
   const refreshFromCallback = useCallback(
@@ -71,19 +75,13 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
 
   const refreshVipFromAccount = useCallback(async () => {
     const email = readPersistedAuthUser()?.email ?? user?.email;
-    if (!email) {
-      setIsVip(readStoredIsVip());
-      return;
-    }
-    const entitled = await fetchVipEntitlementByEmail(email);
-    setIsVip(resolveVipActive(entitled));
-  }, [setIsVip, user]);
+    await syncVipAfterAuth(email ?? null);
+  }, [syncVipAfterAuth, user?.email]);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
     if (!supabase) {
-      processStripeCheckoutReturn();
-      setIsVip(readStoredIsVip());
+      void syncVipAfterAuth(null);
       setLoading(false);
       return;
     }
@@ -91,7 +89,6 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
     let mounted = true;
 
     async function bootstrapAuth() {
-      processStripeCheckoutReturn();
       const fromCallback = await completeSupabaseAuthCallback(supabase!);
       const { data: { session }, error } = await supabase!.auth.getSession();
       if (error) console.warn("[auth]", error.message);
@@ -139,9 +136,11 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     const supabase = getSupabaseClient();
     if (supabase) await supabase.auth.signOut();
-    await applySessionUser(null);
-    setIsVip(readStoredIsVip());
-  }, [applySessionUser, setIsVip]);
+    setUser(null);
+    writePersistedAuthUser(null);
+    clearVipMembership();
+    setIsVip(false);
+  }, [setIsVip]);
 
   const value = useMemo(
     () => ({

@@ -1,4 +1,9 @@
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
+import {
+  activateVipMembership,
+  clearStripeCheckoutPending,
+  clearVipMembership,
+} from "@/lib/vip-subscription";
 
 export function normalizeEntitlementEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -61,4 +66,26 @@ function hasCheckoutEmailForEntitlement(email: string | null | undefined): email
 export async function syncVipAfterCheckoutReturn(email: string | null | undefined): Promise<void> {
   if (!hasCheckoutEmailForEntitlement(email)) return;
   await upsertVipMemberForEmail(email);
+}
+
+/**
+ * After Email login / session refresh: VIP only if Supabase `vip_members` says so.
+ * Clears stale local VIP flags (Magic Link must never grant VIP by itself).
+ */
+export async function applyVipEntitlementForSession(
+  email: string | null | undefined,
+): Promise<boolean> {
+  if (!hasCheckoutEmailForEntitlement(email)) {
+    clearVipMembership();
+    clearStripeCheckoutPending();
+    return false;
+  }
+  const entitled = await fetchVipEntitlementByEmail(email);
+  if (entitled) {
+    activateVipMembership();
+    return true;
+  }
+  clearVipMembership();
+  clearStripeCheckoutPending();
+  return false;
 }
