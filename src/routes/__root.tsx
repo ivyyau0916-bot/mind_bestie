@@ -22,6 +22,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Toaster } from "@/components/ui/sonner";
 import { AppSettingsProvider } from "@/lib/app-settings-context";
 import { VipCheckoutCallbackListener } from "@/components/VipCheckoutCallbackListener";
+import { StripeCheckoutProvider } from "@/lib/stripe-checkout-context";
 
 function NotFoundComponent() {
   return (
@@ -133,17 +134,19 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <MoodProvider>
         <BestieAuthProvider>
-          <VipCheckoutCallbackListener />
           <BestieAccountProvider>
             <AppSettingsProvider>
-              <CareNotificationSync />
-              <main className="mx-auto min-h-dvh max-w-md">
-                <Outlet />
-              </main>
-              <AppSettingsButton />
-              <BestiePreferencesSheet />
-              <BottomNav />
-              <Toaster position="top-center" />
+              <StripeCheckoutProvider>
+                <VipCheckoutCallbackListener />
+                <CareNotificationSync />
+                <main className="mx-auto min-h-dvh max-w-md">
+                  <Outlet />
+                </main>
+                <AppSettingsButton />
+                <BestiePreferencesSheet />
+                <BottomNav />
+                <Toaster position="top-center" />
+              </StripeCheckoutProvider>
             </AppSettingsProvider>
           </BestieAccountProvider>
         </BestieAuthProvider>

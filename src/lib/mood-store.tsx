@@ -14,6 +14,7 @@ import { isInRegistrationTrial } from "@/lib/trial-limits";
 import {
   activateVipMembership,
   clearVipMembership,
+  processStripeCheckoutReturn,
   readStoredIsVip,
   readVipStartDate,
 } from "@/lib/vip-subscription";
@@ -156,6 +157,7 @@ export function MoodProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    processStripeCheckoutReturn();
     try {
       const raw = localStorage.getItem(KEY);
       if (raw) {
@@ -175,6 +177,12 @@ export function MoodProvider({ children }: { children: ReactNode }) {
         setPersonaState(nextPersona);
       } else {
         setEntries(seedEntries());
+        const vip = readStoredIsVip();
+        if (vip) {
+          isVipRef.current = true;
+          setIsVipState(true);
+          setVipStartDate(readVipStartDate());
+        }
       }
     } catch {
       setEntries(seedEntries());
@@ -361,14 +369,15 @@ export function MoodProvider({ children }: { children: ReactNode }) {
     ]);
   };
 
+  /** Privacy reset: chat + mood journal + theme/persona; keeps VIP and freemium usage counters. */
   const clearAll = () => {
     cancelReply();
-    setMessages([{ ...WELCOME, persona, text: getPersona(persona).greeting }]);
+    personaRef.current = "gentle";
+    setPersonaState("gentle");
+    setThemeState("light");
+    setMessages([{ ...WELCOME, persona: "gentle", text: getPersona("gentle").greeting }]);
     setEntries([]);
-    isVipRef.current = false;
-    setIsVipState(false);
-    setVipStartDate(null);
-    clearVipMembership();
+    syncUsage(isVipRef.current, "gentle");
   };
 
   return (

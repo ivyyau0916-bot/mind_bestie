@@ -54,7 +54,21 @@ export function mapSupabaseUser(
   return { id: user.id, email: user.email ?? null, created_at: user.created_at ?? null };
 }
 
-export function getAuthRedirectUrl(path = "/profile"): string {
-  if (typeof window === "undefined") return path;
-  return `${window.location.origin}${path.startsWith("/") ? path : `/${path}`}`;
+/** Canonical site origin for Magic Link redirects (must match Supabase allowlist). */
+export function getAppOrigin(): string {
+  const configured = import.meta.env.VITE_APP_URL?.trim();
+  if (configured) {
+    try {
+      return new URL(configured).origin;
+    } catch {
+      /* fall through */
+    }
+  }
+  if (typeof window !== "undefined") return window.location.origin;
+  return "https://mind-bestie-znvt.vercel.app";
+}
+
+export function getAuthRedirectUrl(path = "/auth/callback"): string {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${getAppOrigin()}${normalized}`;
 }

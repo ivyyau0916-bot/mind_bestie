@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  VIP_CHECKOUT_CELEBRATION_PENDING_KEY,
   VIP_START_DATE_KEY,
   VIP_STORAGE_KEY,
   activateVipMembership,
   clearVipMembership,
+  grantVipMembershipFromCheckoutReturn,
+  markStripeCheckoutPending,
+  processStripeCheckoutReturn,
   isStripeCheckoutSuccessParams,
   readStoredIsVip,
   readVipStartDate,
+  resolveVipActive,
 } from "@/lib/vip-subscription";
 import { STRIPE_PAYMENT_LINK, buildStripeCheckoutUrl, getStripePaymentLink } from "@/lib/stripe-checkout";
 
@@ -28,8 +33,51 @@ describe("VIP subscription storage", () => {
     expect(isStripeCheckoutSuccessParams(new URLSearchParams("vip=success"))).toBe(true);
     expect(isStripeCheckoutSuccessParams(new URLSearchParams("pay_status=success"))).toBe(true);
     expect(isStripeCheckoutSuccessParams(new URLSearchParams("success=true"))).toBe(true);
+    expect(isStripeCheckoutSuccessParams(new URLSearchParams("session_id=cs_test_abc"))).toBe(true);
+    expect(isStripeCheckoutSuccessParams(new URLSearchParams("redirect_status=succeeded"))).toBe(true);
     expect(isStripeCheckoutSuccessParams(new URLSearchParams("vip=pending"))).toBe(false);
     expect(isStripeCheckoutSuccessParams(new URLSearchParams("success=false"))).toBe(false);
+  });
+
+  it("grants local VIP from checkout return URL", () => {
+    window.history.replaceState({}, "", "/chat?success=true");
+    expect(grantVipMembershipFromCheckoutReturn()).toBe(true);
+    expect(readStoredIsVip()).toBe(true);
+    expect(sessionStorage.getItem(VIP_CHECKOUT_CELEBRATION_PENDING_KEY)).toBe("1");
+    expect(window.location.search).toBe("");
+  });
+
+  it("does not grant VIP on bare /chat with pending only (e.g. Magic Link return)", () => {
+    window.history.replaceState({}, "", "/chat");
+    markStripeCheckoutPending();
+    const result = processStripeCheckoutReturn();
+    expect(result.activated).toBe(false);
+    expect(result.promptPaymentConfirm).toBe(true);
+    expect(readStoredIsVip()).toBe(false);
+  });
+
+  it("grants VIP when returning from Stripe referrer with pending checkout", () => {
+    window.history.replaceState({}, "", "/chat");
+    markStripeCheckoutPending();
+    const originalDescriptor = Object.getOwnPropertyDescriptor(document, "referrer");
+    Object.defineProperty(document, "referrer", {
+      configurable: true,
+      value: "https://checkout.stripe.com/c/pay/cs_test_abc",
+    });
+    try {
+      const result = processStripeCheckoutReturn();
+      expect(result.activated).toBe(true);
+      expect(readStoredIsVip()).toBe(true);
+    } finally {
+      if (originalDescriptor) Object.defineProperty(document, "referrer", originalDescriptor);
+      else Object.defineProperty(document, "referrer", { configurable: true, value: "" });
+    }
+  });
+
+  it("resolveVipActive keeps local VIP when server entitlement is false", () => {
+    activateVipMembership();
+    expect(resolveVipActive(false)).toBe(true);
+    expect(resolveVipActive(true)).toBe(true);
   });
 
   it("clears VIP membership", () => {

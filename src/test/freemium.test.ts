@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  DAILY_CHAT_BY_PERSONA_KEY,
   DAILY_CHAT_COUNT_KEY,
   FREE_DAILY_CHAT_LIMIT,
   LAST_CHAT_DATE_KEY,
+  TRIAL_CHAT_COUNTS_KEY,
   TRIAL_CHAT_LIMIT_PER_PERSONA,
   canSendChatAsFreeUser,
   canSendFreeChat,
@@ -12,6 +14,7 @@ import {
   incrementDailyChatCount,
   incrementPersonaDailyChatCount,
   incrementTrialChatCount,
+  USAGE_QUOTA_PRESERVE_KEYS,
   isPersonaChatUnlocked,
   isPersonaTrialLocked,
   isPersonaUnlocked,
@@ -86,5 +89,17 @@ describe("Freemium daily chat limits", () => {
     saveDailyCardDraw({ id: "v1", quote: "VIP 金句" }, "gentle", now);
     expect(getDailyCardDrawState(true, "gentle", now).canDraw).toBe(false);
     expect(getDailyCardDrawState(true, "fierce", now).canDraw).toBe(true);
+  });
+
+  it("documents quota keys that privacy reset must preserve", () => {
+    const now = new Date("2026-10-23T12:00:00");
+    for (let i = 0; i < 5; i++) incrementPersonaDailyChatCount("gentle", now);
+    incrementTrialChatCount("fierce");
+    saveDailyCardDraw({ id: "g1", quote: "test" }, "gentle", now);
+    const snapshot = Object.fromEntries(
+      USAGE_QUOTA_PRESERVE_KEYS.map((key) => [key, localStorage.getItem(key)]),
+    );
+    expect(snapshot[DAILY_CHAT_BY_PERSONA_KEY]).toContain("gentle");
+    expect(snapshot[TRIAL_CHAT_COUNTS_KEY]).toBeTruthy();
   });
 });

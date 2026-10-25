@@ -21,8 +21,8 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { useAppSettings } from "@/lib/app-settings-context";
+import { useStripeCheckout } from "@/lib/stripe-checkout-context";
 import { clearBestieAccountData, normalizeUserName } from "@/lib/bestie-account";
-import { clearDailyCardDrawHistory, clearTrialChatCounts } from "@/lib/freemium";
 import { useBestieAccount } from "@/lib/bestie-account-context";
 import {
   ensureNotificationPermission,
@@ -55,6 +55,7 @@ const HOTLINES = [
 
 export function BestiePreferencesSheet() {
   const { preferencesOpen, setPreferencesOpen } = useAppSettings();
+  const startVipCheckout = useStripeCheckout();
   const {
     theme,
     setTheme,
@@ -275,7 +276,10 @@ export function BestiePreferencesSheet() {
                     <Button
                       type="button"
                       className="mt-3 w-full rounded-full bg-gradient-to-r from-amber-500/90 to-rose-500/90 font-medium shadow-md hover:opacity-95"
-                      onClick={() => setVipOpen(true)}
+                      onClick={() => {
+                        setPreferencesOpen(false);
+                        window.requestAnimationFrame(() => startVipCheckout());
+                      }}
                     >
                       升級 VIP（{VIP_PRICE_LABEL}）
                     </Button>
@@ -433,7 +437,7 @@ export function BestiePreferencesSheet() {
                   </AccordionItem>
                 </Accordion>
                 <p className="text-xs leading-relaxed text-destructive/90">
-                  ⚠️ 注意：重置資料將一併清除本機上的 VIP 會員狀態與所有歷史對話，且無法復原。
+                  ⚠️ 注意：重設將清除本機聊天與日記等資料，無法復原；今日免費對話次數與試用期不會因此重置。
                 </p>
                 <Button
                   variant="outline"
@@ -460,12 +464,15 @@ export function BestiePreferencesSheet() {
             <AlertDialogTitle>確定要重置並清除所有資料嗎？</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
+                <p className="rounded-xl border border-amber-200/60 bg-amber-50/60 px-3 py-2 text-[13px] text-amber-950 dark:border-amber-500/25 dark:bg-amber-950/35 dark:text-amber-100">
+                  重設帳號將清空所有聊天紀錄與設定，但不會重置今日已使用的免費對話次數喔！
+                </p>
                 <p>此操作將永久刪除：</p>
                 <ol className="list-decimal space-y-1 pl-4">
                   <li>所有 Bestie 傾訴紀錄與心情日記</li>
-                  <li>本機的 VIP 尊尚會員啟用狀態</li>
+                  <li>本機暱稱、靈魂卡盒紀錄與部分個人設定</li>
                 </ol>
-                <p>如需保留 VIP 權限，請勿清除。確定要繼續嗎？</p>
+                <p>確定要繼續嗎？</p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -478,9 +485,7 @@ export function BestiePreferencesSheet() {
               onClick={() => {
                 clearAll();
                 clearBestieAccountData();
-                clearDailyCardDrawHistory();
-                clearTrialChatCounts();
-                toast("已重置所有本機資料");
+                toast("已重置本機聊天與日記資料");
                 setClearAllConfirmOpen(false);
                 setPreferencesOpen(false);
                 window.location.reload();

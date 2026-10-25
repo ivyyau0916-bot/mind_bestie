@@ -36,7 +36,13 @@ export function hasAuthCallbackInUrl(href = typeof window !== "undefined" ? wind
     const hash = url.hash.replace(/^#/, "");
     if (!hash) return false;
     const params = new URLSearchParams(hash);
-    return params.has("access_token") || params.has("refresh_token") || params.get("type") === "recovery";
+    return (
+      params.has("access_token") ||
+      params.has("refresh_token") ||
+      params.get("type") === "recovery" ||
+      params.get("type") === "magiclink" ||
+      params.get("type") === "signup"
+    );
   } catch {
     return false;
   }
@@ -45,6 +51,7 @@ export function hasAuthCallbackInUrl(href = typeof window !== "undefined" ? wind
 export function stripAuthCallbackFromUrl(href = window.location.href): void {
   const url = new URL(href);
   for (const key of AUTH_QUERY_KEYS) url.searchParams.delete(key);
+  url.hash = "";
   const search = url.searchParams.toString();
   const path = url.pathname + (search ? `?${search}` : "");
   window.history.replaceState({}, document.title, path);
@@ -54,9 +61,15 @@ export function stripAuthHashFromUrl(): void {
   window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
 }
 
+function parseHashAuthParams(): URLSearchParams | null {
+  const hash = window.location.hash.replace(/^#/, "");
+  if (!hash) return null;
+  return new URLSearchParams(hash);
+}
+
 /**
- * Completes OAuth / Magic Link return handling (PKCE `code` or hash tokens).
- * Returns the session user when exchange succeeds.
+ * Completes Magic Link / PKCE return handling.
+ * Relies on Supabase `detectSessionInUrl` for PKCE (single code exchange); hash tokens use setSession fallback.
  */
 export async function completeSupabaseAuthCallback(
   supabase: SupabaseClient,
@@ -64,7 +77,6 @@ export async function completeSupabaseAuthCallback(
   if (typeof window === "undefined") return null;
 
   const url = new URL(window.location.href);
-  const code = url.searchParams.get("code");
   const authError = url.searchParams.get("error_description") ?? url.searchParams.get("error");
 
   if (authError) {
@@ -73,24 +85,34 @@ export async function completeSupabaseAuthCallback(
     return null;
   }
 
-  if (code) {
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-    stripAuthCallbackFromUrl();
-    if (error) {
-      console.warn("[auth-callback]", error.message);
-      return null;
+  const hasCallback = hasAuthCallbackInUrl();
+  if (!hasCallback) return null;
+
+  // One exchange path: GoTrue `_initialize()` runs inside `getSession()` when detectSessionInUrl is true.
+  let { data: { session }, error } = await supabase.auth.getSession();
+  if (error) console.warn("[auth-callback]", error.message);
+
+  if (!session?.user) {
+    const hashParams = parseHashAuthParams();
+    const access_token = hashParams?.get("access_token");
+    const refresh_token = hashParams?.get("refresh_token");
+    if (access_token && refresh_token) {
+      const setResult = await supabase.auth.setSession({ access_token, refresh_token });
+      if (setResult.error) console.warn("[auth-callback]", setResult.error.message);
+      session = setResult.data.session ?? session;
     }
-    return mapSupabaseUser(data.session?.user ?? null);
   }
 
-  const hash = window.location.hash.replace(/^#/, "");
-  if (hash && (hash.includes("access_token=") || hash.includes("refresh_token="))) {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) console.warn("[auth-callback]", error.message);
-    if (session?.user) {
-      stripAuthHashFromUrl();
-      return mapSupabaseUser(session.user);
+  if (session?.user) {
+    if (url.searchParams.get("code") || window.location.hash.includes("access_token")) {
+      stripAuthCallbackFromUrl();
     }
+    return mapSupabaseUser(session.user);
+  }
+
+  if (url.searchParams.get("code")) {
+    console.warn("[auth-callback] auth callback in URL but no session after getSession");
+    stripAuthCallbackFromUrl();
   }
 
   return null;

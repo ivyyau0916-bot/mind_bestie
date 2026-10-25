@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, Lock, Send } from "lucide-react";
 import { PersonaTrialExhaustedDialog } from "@/components/PersonaTrialExhaustedDialog";
 import { VipUnlockDialog } from "@/components/VipUnlockDialog";
-import { useStripeCheckout } from "@/lib/use-stripe-checkout";
+import { useStripeCheckout } from "@/lib/stripe-checkout-context";
 import { detectUserCrisis } from "@/lib/crisis-intervention";
 import {
   canSendChatAsFreeUser,

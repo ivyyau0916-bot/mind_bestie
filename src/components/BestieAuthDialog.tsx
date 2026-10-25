@@ -15,20 +15,19 @@ import { cn } from "@/lib/utils";
 type BestieAuthDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onGoogleSignIn: () => Promise<void>;
   onMagicLink: (email: string) => Promise<{ ok: true } | { ok: false; message: string }>;
 };
 
-export function BestieAuthDialog({ open, onOpenChange, onGoogleSignIn, onMagicLink }: BestieAuthDialogProps) {
+export function BestieAuthDialog({ open, onOpenChange, onMagicLink }: BestieAuthDialogProps) {
   const [email, setEmail] = useState("");
-  const [busy, setBusy] = useState<"google" | "email" | null>(null);
+  const [busy, setBusy] = useState(false);
   const [magicSent, setMagicSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const resetTransient = () => {
     setError(null);
     setMagicSent(false);
-    setBusy(null);
+    setBusy(false);
   };
 
   return (
@@ -70,18 +69,18 @@ export function BestieAuthDialog({ open, onOpenChange, onGoogleSignIn, onMagicLi
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={busy !== null}
+                disabled={busy}
                 className="h-11 rounded-2xl border-stone-300/70 bg-white/90 text-sm placeholder:text-stone-400 dark:border-stone-700/60 dark:bg-stone-900/80"
               />
               <Button
                 type="button"
                 className="h-11 w-full rounded-2xl bg-stone-900 text-sm font-medium text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white"
-                disabled={busy !== null || !email.trim()}
+                disabled={busy || !email.trim()}
                 onClick={async () => {
                   setError(null);
-                  setBusy("email");
+                  setBusy(true);
                   const res = await onMagicLink(email.trim());
-                  setBusy(null);
+                  setBusy(false);
                   if (res.ok) {
                     setMagicSent(true);
                   } else {
@@ -89,7 +88,7 @@ export function BestieAuthDialog({ open, onOpenChange, onGoogleSignIn, onMagicLi
                   }
                 }}
               >
-                {busy === "email" ? (
+                {busy ? (
                   <Loader2 className="size-4 animate-spin" aria-hidden />
                 ) : (
                   <>

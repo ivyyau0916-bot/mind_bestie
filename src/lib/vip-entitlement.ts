@@ -26,3 +26,39 @@ export async function fetchVipEntitlementByEmail(email: string | null | undefine
   }
   return Boolean(data?.active);
 }
+
+/**
+ * After client-side Stripe return, bind VIP to the logged-in email in Supabase.
+ * Requires RLS policies in supabase/vip_members.sql (insert/update own row).
+ */
+export async function upsertVipMemberForEmail(email: string | null | undefined): Promise<boolean> {
+  if (!hasCheckoutEmailForEntitlement(email) || !isSupabaseConfigured()) return false;
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+
+  const normalized = normalizeEntitlementEmail(email);
+  const { error } = await supabase.from("vip_members").upsert(
+    {
+      email: normalized,
+      active: true,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "email" },
+  );
+
+  if (error) {
+    console.warn("[vip-entitlement] upsert failed", error.message);
+    return false;
+  }
+  return true;
+}
+
+function hasCheckoutEmailForEntitlement(email: string | null | undefined): email is string {
+  return Boolean(email?.trim().includes("@"));
+}
+
+/** Local VIP activated + optional Supabase row for signed-in user. */
+export async function syncVipAfterCheckoutReturn(email: string | null | undefined): Promise<void> {
+  if (!hasCheckoutEmailForEntitlement(email)) return;
+  await upsertVipMemberForEmail(email);
+}

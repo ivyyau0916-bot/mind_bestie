@@ -15,6 +15,20 @@ create policy "Users read own VIP row"
   to authenticated
   using (lower(email) = lower(coalesce(auth.jwt() ->> 'email', '')));
 
+-- Allow signed-in users to bind VIP to their own email after Stripe return (prefer Stripe webhook in production).
+create policy "Users insert own VIP row"
+  on public.vip_members
+  for insert
+  to authenticated
+  with check (lower(email) = lower(coalesce(auth.jwt() ->> 'email', '')));
+
+create policy "Users update own VIP row"
+  on public.vip_members
+  for update
+  to authenticated
+  using (lower(email) = lower(coalesce(auth.jwt() ->> 'email', '')))
+  with check (lower(email) = lower(coalesce(auth.jwt() ->> 'email', '')));
+
 -- Example: grant VIP after Stripe payment (replace email)
 -- insert into public.vip_members (email, active) values ('user@example.com', true)
 -- on conflict (email) do update set active = true, updated_at = now();

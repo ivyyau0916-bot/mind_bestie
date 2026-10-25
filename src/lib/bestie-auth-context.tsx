@@ -22,7 +22,7 @@ import {
   writePersistedAuthUser,
 } from "@/lib/supabase-auth-callback";
 import { fetchVipEntitlementByEmail } from "@/lib/vip-entitlement";
-import { readStoredIsVip } from "@/lib/vip-subscription";
+import { processStripeCheckoutReturn, readStoredIsVip, resolveVipActive } from "@/lib/vip-subscription";
 import { useMood } from "@/lib/mood-store";
 
 type BestieAuthContextValue = {
@@ -32,7 +32,6 @@ type BestieAuthContextValue = {
   authOpen: boolean;
   openAuth: () => void;
   closeAuth: () => void;
-  signInWithGoogle: () => Promise<void>;
   signInWithMagicLink: (email: string) => Promise<{ ok: true } | { ok: false; message: string }>;
   signOut: () => Promise<void>;
   refreshVipFromAccount: () => Promise<void>;
@@ -53,13 +52,11 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
     async (next: BestieAuthUser | null, options?: { closeAuthDialog?: boolean }) => {
       setUser(next);
       writePersistedAuthUser(next);
-      if (!next?.email) {
-        setIsVip(readStoredIsVip());
-        return;
+      let entitled = false;
+      if (next?.email) {
+        entitled = await fetchVipEntitlementByEmail(next.email);
       }
-      const entitled = await fetchVipEntitlementByEmail(next.email);
-      if (entitled) setIsVip(true);
-      else setIsVip(readStoredIsVip());
+      setIsVip(resolveVipActive(entitled));
       if (options?.closeAuthDialog) setAuthOpen(false);
     },
     [setIsVip],
@@ -73,18 +70,20 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
   );
 
   const refreshVipFromAccount = useCallback(async () => {
-    const current = user;
-    if (!current?.email) {
+    const email = readPersistedAuthUser()?.email ?? user?.email;
+    if (!email) {
       setIsVip(readStoredIsVip());
       return;
     }
-    const entitled = await fetchVipEntitlementByEmail(current.email);
-    setIsVip(entitled || readStoredIsVip());
+    const entitled = await fetchVipEntitlementByEmail(email);
+    setIsVip(resolveVipActive(entitled));
   }, [setIsVip, user]);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
     if (!supabase) {
+      processStripeCheckoutReturn();
+      setIsVip(readStoredIsVip());
       setLoading(false);
       return;
     }
@@ -92,11 +91,13 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
     let mounted = true;
 
     async function bootstrapAuth() {
-      await completeSupabaseAuthCallback(supabase!);
+      processStripeCheckoutReturn();
+      const fromCallback = await completeSupabaseAuthCallback(supabase!);
       const { data: { session }, error } = await supabase!.auth.getSession();
       if (error) console.warn("[auth]", error.message);
       if (!mounted) return;
-      await applySessionUser(mapSupabaseUser(session?.user ?? null));
+      const mapped = mapSupabaseUser(session?.user ?? null) ?? fromCallback;
+      await applySessionUser(mapped, { closeAuthDialog: Boolean(fromCallback?.email) });
       if (mounted) setLoading(false);
     }
 
@@ -118,16 +119,6 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
     };
   }, [applySessionUser]);
 
-  const signInWithGoogle = useCallback(async () => {
-    const supabase = getSupabaseClient();
-    if (!supabase) throw new Error("Supabase 尚未設定");
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: getAuthRedirectUrl("/profile") },
-    });
-    if (error) throw error;
-  }, []);
-
   const signInWithMagicLink = useCallback(async (email: string) => {
     const supabase = getSupabaseClient();
     if (!supabase) {
@@ -139,7 +130,7 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
     }
     const { error } = await supabase.auth.signInWithOtp({
       email: trimmed,
-      options: { emailRedirectTo: getAuthRedirectUrl("/profile") },
+      options: { emailRedirectTo: getAuthRedirectUrl() },
     });
     if (error) return { ok: false as const, message: error.message };
     return { ok: true as const };
@@ -160,7 +151,6 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
       authOpen,
       openAuth: () => setAuthOpen(true),
       closeAuth: () => setAuthOpen(false),
-      signInWithGoogle,
       signInWithMagicLink,
       signOut,
       refreshVipFromAccount,
@@ -171,7 +161,6 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
       loading,
       user,
       authOpen,
-      signInWithGoogle,
       signInWithMagicLink,
       signOut,
       refreshVipFromAccount,
@@ -183,12 +172,7 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
     <BestieAuthContext.Provider value={value}>
       {children}
       {configured && (
-        <BestieAuthDialog
-          open={authOpen}
-          onOpenChange={setAuthOpen}
-          onGoogleSignIn={signInWithGoogle}
-          onMagicLink={signInWithMagicLink}
-        />
+        <BestieAuthDialog open={authOpen} onOpenChange={setAuthOpen} onMagicLink={signInWithMagicLink} />
       )}
     </BestieAuthContext.Provider>
   );

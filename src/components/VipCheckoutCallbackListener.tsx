@@ -1,32 +1,76 @@
 import { useEffect, useRef, useState } from "react";
+import { StripeCheckoutConfirmDialog } from "@/components/StripeCheckoutConfirmDialog";
 import { VipCelebrationDialog } from "@/components/VipCelebrationDialog";
+import { fetchActiveAuthEmail } from "@/lib/bestie-auth-session";
 import { useBestieAuth } from "@/lib/bestie-auth-context";
+import { syncVipAfterCheckoutReturn } from "@/lib/vip-entitlement";
 import { useMood } from "@/lib/mood-store";
 import {
-  activateVipMembership,
-  isStripeCheckoutSuccessParams,
-  stripCheckoutSuccessFromUrl,
+  confirmStripeCheckoutPaymentCompleted,
+  processStripeCheckoutReturn,
+  readStoredIsVip,
 } from "@/lib/vip-subscription";
 
-/** Global Stripe return-url handler (?success=true | ?vip=success | ?pay_status=success). */
+/** Stripe return handler (query params, referrer, or bare /chat success URL). */
 export function VipCheckoutCallbackListener() {
   const { setIsVip } = useMood();
-  const { refreshVipFromAccount } = useBestieAuth();
+  const { refreshVipFromAccount, loading: authLoading } = useBestieAuth();
   const [celebrateOpen, setCelebrateOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const handledRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined" || handledRef.current) return;
-    const params = new URLSearchParams(window.location.search);
-    if (!isStripeCheckoutSuccessParams(params)) return;
+
+    const result = processStripeCheckoutReturn();
+    if (!result.activated && !result.showCelebration && !result.promptPaymentConfirm) {
+      return;
+    }
 
     handledRef.current = true;
-    activateVipMembership();
-    setIsVip(true);
-    void refreshVipFromAccount();
-    stripCheckoutSuccessFromUrl();
-    setCelebrateOpen(true);
-  }, [setIsVip, refreshVipFromAccount]);
+    if (result.activated) {
+      setIsVip(true);
+      void (async () => {
+        const email = await fetchActiveAuthEmail();
+        await syncVipAfterCheckoutReturn(email);
+      })();
+    }
+    if (result.showCelebration) {
+      setCelebrateOpen(true);
+    }
+    if (result.promptPaymentConfirm) {
+      setConfirmOpen(true);
+    }
+  }, [setIsVip]);
 
-  return <VipCelebrationDialog open={celebrateOpen} onOpenChange={setCelebrateOpen} />;
+  useEffect(() => {
+    if (authLoading || !readStoredIsVip()) return;
+    void (async () => {
+      const email = await fetchActiveAuthEmail();
+      await syncVipAfterCheckoutReturn(email);
+      await refreshVipFromAccount();
+    })();
+  }, [authLoading, refreshVipFromAccount]);
+
+  const handleConfirmPaid = () => {
+    confirmStripeCheckoutPaymentCompleted();
+    setIsVip(true);
+    void (async () => {
+      const email = await fetchActiveAuthEmail();
+      await syncVipAfterCheckoutReturn(email);
+      await refreshVipFromAccount();
+    })();
+    setCelebrateOpen(true);
+  };
+
+  return (
+    <>
+      <VipCelebrationDialog open={celebrateOpen} onOpenChange={setCelebrateOpen} />
+      <StripeCheckoutConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirmPaid={handleConfirmPaid}
+      />
+    </>
+  );
 }

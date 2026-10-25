@@ -323,6 +323,21 @@ export function clearTrialChatCounts(): void {
   localStorage.removeItem(TRIAL_CHAT_COUNTS_KEY);
 }
 
+/**
+ * Keys that must survive「重設／清除資料」— prevents resetting daily free chat or draw quotas.
+ * Registration trial length uses Supabase Auth `user.created_at` (not cleared here).
+ */
+export const USAGE_QUOTA_PRESERVE_KEYS = [
+  DAILY_CHAT_COUNT_KEY,
+  LAST_CHAT_DATE_KEY,
+  DAILY_CHAT_BY_PERSONA_KEY,
+  TRIAL_CHAT_COUNTS_KEY,
+  DAILY_CARD_DRAWS_BY_PERSONA_KEY,
+  DAILY_CARD_DATE_KEY,
+  DAILY_CARD_QUOTE_KEY,
+  DAILY_CARD_ID_KEY,
+] as const;
+
 export function buildTrialExhaustedVipMessage(persona: PersonaId): string {
   const label = persona === "fierce" ? "戰友" : persona === "wise" ? "理性" : "Bestie";
   return `你已用完 ${TRIAL_CHAT_LIMIT_PER_PERSONA} 次${label}試用對話。訂閱 VIP 尊尚會員，解鎖全 3 位 Bestie 無限傾訴與每日靈魂金句卡片 ✨`;

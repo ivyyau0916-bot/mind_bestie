@@ -21,6 +21,10 @@ describe("supabase auth callback helpers", () => {
     expect(hasAuthCallbackInUrl("https://app.test/profile#access_token=xyz&type=bearer")).toBe(true);
   });
 
+  it("detects magic link type in hash", () => {
+    expect(hasAuthCallbackInUrl("https://app.test/auth/callback#type=magiclink&access_token=xyz")).toBe(true);
+  });
+
   it("persists auth user snapshot for instant UI", () => {
     writePersistedAuthUser({ id: "user-1", email: "ivy@example.com" });
     expect(localStorage.getItem(AUTH_USER_ID_KEY)).toBe("user-1");

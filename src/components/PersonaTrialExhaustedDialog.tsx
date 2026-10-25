@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { buildTrialExhaustedVipMessage } from "@/lib/freemium";
 import type { PersonaId } from "@/lib/chat-personas";
-import { useStripeCheckout } from "@/lib/use-stripe-checkout";
+import { useStripeCheckout } from "@/lib/stripe-checkout-context";
 import { cn } from "@/lib/utils";
 
 type PersonaTrialExhaustedDialogProps = {

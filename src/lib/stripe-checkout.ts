@@ -1,3 +1,5 @@
+import { markStripeCheckoutPending } from "@/lib/vip-subscription";
+
 export const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_3cI4gydftcOkghl8xB1ck00";
 
 export function getStripePaymentLink(): string {
@@ -8,28 +10,48 @@ export function getStripePaymentLink(): string {
 export function buildStripeCheckoutUrl(email?: string | null): string {
   const base = getStripePaymentLink();
   const trimmed = email?.trim();
-  if (!trimmed || !trimmed.includes("@")) return base;
   try {
     const url = new URL(base);
-    url.searchParams.set("prefilled_email", trimmed);
+    if (trimmed?.includes("@")) {
+      url.searchParams.set("prefilled_email", trimmed);
+    }
     return url.toString();
   } catch {
-    const sep = base.includes("?") ? "&" : "?";
-    return `${base}${sep}prefilled_email=${encodeURIComponent(trimmed)}`;
+    const parts = [base];
+    if (trimmed?.includes("@")) {
+      parts.push(`${base.includes("?") ? "&" : "?"}prefilled_email=${encodeURIComponent(trimmed)}`);
+    }
+    return parts.join("");
   }
 }
 
-export function redirectToStripeCheckout(email?: string | null): void {
-  window.location.href = buildStripeCheckoutUrl(email);
+export const STRIPE_CHECKOUT_EMAIL_KEY = "bestie_stripe_checkout_email";
+
+/**
+ * Redirect to Stripe Payment Link. Call only after `evaluateVipCheckoutGate` allows.
+ */
+export function redirectToStripeCheckout(email: string): void {
+  const trimmed = email.trim();
+  if (!trimmed.includes("@")) {
+    console.error("[stripe] blocked checkout: missing valid session email");
+    throw new Error("Stripe checkout requires a signed-in Bestie email");
+  }
+  markStripeCheckoutPending();
+  try {
+    localStorage.setItem(STRIPE_CHECKOUT_EMAIL_KEY, trimmed.toLowerCase());
+  } catch {
+    /* ignore */
+  }
+  window.location.href = buildStripeCheckoutUrl(trimmed);
 }
 
 /** @deprecated Use redirectToStripeCheckout */
-export function openStripeCheckout(email?: string | null): boolean {
+export function openStripeCheckout(email: string): boolean {
   redirectToStripeCheckout(email);
   return true;
 }
 
 /** Configure this as the Payment Link success URL in Stripe Dashboard. */
 export function buildStripeSuccessReturnUrl(origin = typeof window !== "undefined" ? window.location.origin : ""): string {
-  return `${origin}/?success=true`;
+  return `${origin}/chat?success=true`;
 }

@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DAILY_CARD_PERSONA_LOCK_MESSAGE } from "@/lib/freemium";
-import { useStripeCheckout } from "@/lib/use-stripe-checkout";
+import { useStripeCheckout } from "@/lib/stripe-checkout-context";
 import { cn } from "@/lib/utils";
 
 export const DAILY_CARD_VIP_UNLOCK_TITLE = "解鎖專屬 Bestie 與每日 3 張金句卡";

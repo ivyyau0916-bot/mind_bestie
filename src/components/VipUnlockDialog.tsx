@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { VIP_PRICE_LABEL } from "@/lib/freemium";
-import { useStripeCheckout } from "@/lib/use-stripe-checkout";
+import { useStripeCheckout } from "@/lib/stripe-checkout-context";
 import { cn } from "@/lib/utils";
 
 type VipUnlockDialogProps = {
@@ -18,7 +18,13 @@ type VipUnlockDialogProps = {
 };
 
 export function VipUnlockDialog({ open, onOpenChange, title = "解鎖 VIP 陪伴計劃" }: VipUnlockDialogProps) {
-  const goStripeCheckout = useStripeCheckout();
+  const startVipCheckout = useStripeCheckout();
+
+  const handleUpgradeClick = () => {
+    onOpenChange(false);
+    window.requestAnimationFrame(() => startVipCheckout());
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -44,15 +50,13 @@ export function VipUnlockDialog({ open, onOpenChange, title = "解鎖 VIP 陪伴
         </ul>
         <div className="flex flex-col gap-2">
           <Button
+            type="button"
             className="w-full rounded-2xl bg-gradient-to-r from-violet-600/90 to-rose-500/85 font-medium hover:opacity-95"
-            onClick={() => {
-              onOpenChange(false);
-              goStripeCheckout();
-            }}
+            onClick={handleUpgradeClick}
           >
-            立即訂閱 VIP
+            升級 VIP（{VIP_PRICE_LABEL}）
           </Button>
-          <Button variant="ghost" className="w-full rounded-2xl" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="ghost" className="w-full rounded-2xl" onClick={() => onOpenChange(false)}>
             下次先
           </Button>
         </div>
