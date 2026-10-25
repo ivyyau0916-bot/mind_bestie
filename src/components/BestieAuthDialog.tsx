@@ -44,8 +44,7 @@ export function BestieAuthDialog({ open, onOpenChange, onGoogleSignIn, onMagicLi
     >
       <DialogContent
         className={cn(
-          "max-w-sm rounded-[1.75rem] border-stone-300/45 bg-gradient-to-b from-stone-100/98 via-background to-violet-50/40",
-          "dark:border-stone-600/35 dark:from-stone-900/98 dark:to-violet-950/30",
+          "max-w-sm rounded-[1.75rem] border-stone-300/45 bg-gradient-to-b from-stone-100/98 via-background to-violet-50/50 p-6 shadow-xl backdrop-blur-md dark:border-stone-600/35 dark:from-stone-900/98 dark:to-violet-950/30",
         )}
       >
         <DialogHeader className="items-center text-center">
@@ -56,11 +55,8 @@ export function BestieAuthDialog({ open, onOpenChange, onGoogleSignIn, onMagicLi
         </DialogHeader>
 
         <div className="flex flex-col gap-3">
-
-          <div className="relative py-1 text-center text-[11px] text-muted-foreground">
-
           {magicSent ? (
-            <p className="rounded-2xl border border-violet-200/60 bg-violet-50/50 px-3 py-3 text-center text-sm leading-relaxed text-stone-700 dark:border-violet-500/25 dark:bg-violet-950/30 dark:text-stone-200">
+            <p className="rounded-2xl border border-violet-200/60 bg-violet-50/50 px-3 py-3 text-center text-sm leading-relaxed text-violet-950 dark:border-violet-800/40 dark:bg-violet-950/40 dark:text-violet-100">
               登入連結已寄到你的信箱，請在 24 小時內點擊郵件中的按鈕完成登入 ✉️
             </p>
           ) : (
@@ -68,30 +64,50 @@ export function BestieAuthDialog({ open, onOpenChange, onGoogleSignIn, onMagicLi
               <label className="sr-only" htmlFor="bestie-magic-email">
                 Email
               </label>
-              <div className="flex gap-2">
-                <Input
-                  id="bestie-magic-email"
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  className="rounded-2xl"
-                  disabled={busy !== null}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <p className="text-center text-[11px] text-muted-foreground">Email Magic Link · 免密碼郵件登入</p>
+              <Input
+                id="bestie-magic-email"
+                type="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={busy !== null}
+                className="h-11 rounded-2xl border-stone-300/70 bg-white/90 text-sm placeholder:text-stone-400 dark:border-stone-700/60 dark:bg-stone-900/80"
+              />
+              <Button
+                type="button"
+                className="h-11 w-full rounded-2xl bg-stone-900 text-sm font-medium text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-white"
+                disabled={busy !== null || !email.trim()}
+                onClick={async () => {
+                  setError(null);
+                  setBusy("email");
+                  const res = await onMagicLink(email.trim());
+                  setBusy(null);
+                  if (res.ok) {
+                    setMagicSent(true);
+                  } else {
+                    setError(res.message);
+                  }
+                }}
+              >
+                {busy === "email" ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <>
+                    <Mail className="mr-2 size-4" aria-hidden />
+                    發送 Email 登入連結
+                  </>
+                )}
+              </Button>
             </>
           )}
 
           {error && (
-            <p role="alert" className="text-center text-xs text-destructive">
+            <p className="text-center text-xs text-rose-600 dark:text-rose-400" role="alert">
               {error}
             </p>
           )}
 
-          <p className="rounded-2xl bg-stone-100/80 px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground dark:bg-stone-800/40">
+          <p className="px-1 text-center text-[11px] leading-relaxed text-muted-foreground">
             {AUTH_PRIVACY_NOTE}
           </p>
         </div>
