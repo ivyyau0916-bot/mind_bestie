@@ -21,30 +21,45 @@ export const WHATSAPP_HUMAN_CONVERSATION_RULE = `【真人對話硬性法則 - W
 【口語變化豐富】
 根據情境靈活使用廣東話嘆詞（如：「下？」、「唔係呀嘛？」、「真心咩？」、「🫂」、「哎呀…」），每一次回應的句型都要不一樣！`;
 
+/** Cantonese particle / exclamation usage — all AI personas must follow. */
+export const CANTONESE_CHARACTER_USAGE_RULE = `【粵語用字規範】：
+- 表示「一下子／一下子做某事」嘅口語助詞（例如：睇下、試下、識下），請統一使用「吓」或「下」，絕對禁止使用「嚇」（例如：「識吓新朋友」、「試吓」、「等吓」）。
+- 表示驚訝嘅感嘆詞，請使用「下！」或「吓！」，請勿誤用「嚇」。`;
+
 /** Cantonese orthography for HK WhatsApp chat — system prompt + post-processing. */
-export const HK_CANTONESE_ORTHography_RULE = `【粵語正字與口語對照 - 強制用字】
+export const HK_CANTONESE_ORTHography_RULE = `${CANTONESE_CHARACTER_USAGE_RULE}
+
+【粵語正字與口語對照 - 強制用字】
 動詞／時態／助詞：
 ❌ 問嚇 ➔ ✅ 問吓 或 問下
-❌ 食咗飯未嚇、聽嚇、睇嚇 ➔ ✅ 食咗飯未呀、聽吓、睇吓
+❌ 食咗飯未嚇、聽嚇、睇嚇、試嚇、識嚇、等嚇 ➔ ✅ 食咗飯未呀、聽吓、睇吓、試吓、識吓、等吓
 ❌ 黎、黎緊 ➔ ✅ 嚟、嚟緊（例如：返嚟、過嚟、嚟緊）
 ❌ 既（你既心情） ➔ ✅ 嘅（你嘅心情、佢嘅事）
 ❌ 沉日 ➔ ✅ 琴日／尋日
 ❌ 甘樣 ➔ ✅ 咁樣
 ❌ 种係（誤用） ➔ ✅ 仲係（表示仍然時）
 地道問候／回應參考（唔好逐字照抄，保持 WhatsApp 口語感）：
-「你想問吓咩呀？」「要唔要聽吓我嘅建議？」「聽你咁講，我都覺得…」
+「你想問吓咩呀？」「要唔要聽吓我嘅建議？」「識吓新朋友」「試吓先」「等吓我」
+驚訝感嘆：「下！」「吓！」（唔好用「嚇！」）
 標點同 Emoji 配合語氣即可，唔使每句都加。`;
 
 /** Common wrong characters in model Cantonese output. */
 export const HK_CANTONESE_TYPO_PATTERN =
-  /問嚇|聽嚇|睇嚇|食咗飯未嚇|黎緊|返黎|過黎|你既|佢既|我既|我地既|沉日|甘樣|种係|种意/;
+  /問嚇|聽嚇|睇嚇|試嚇|试嚇|識嚇|识嚇|等嚇|食咗飯未嚇|嚇！|嚇!|黎緊|返黎|過黎|你既|佢既|我既|我地既|沉日|甘樣|种係|种意/;
 
 export function fixCantoneseOrthography(text: string): string {
   return text
     .replace(/問嚇/g, "問吓")
     .replace(/聽嚇/g, "聽吓")
     .replace(/睇嚇/g, "睇吓")
+    .replace(/試嚇/g, "試吓")
+    .replace(/试嚇/g, "试吓")
+    .replace(/識嚇/g, "識吓")
+    .replace(/识嚇/g, "识吓")
+    .replace(/等嚇/g, "等吓")
     .replace(/食咗飯未嚇/g, "食咗飯未呀")
+    .replace(/嚇！/g, "下！")
+    .replace(/嚇!/g, "下!")
     .replace(/黎緊/g, "嚟緊")
     .replace(/返黎/g, "返嚟")
     .replace(/過黎/g, "過嚟")

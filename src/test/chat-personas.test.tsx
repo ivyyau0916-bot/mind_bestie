@@ -82,11 +82,14 @@ describe("Language and localization rules", () => {
     expect(reply).not.toMatch(/我們|這件事|主管|傻眼|jio|lah/);
   });
   it("switches system prompt and handoff voice immediately", () => {
-    expect(activeSystemPrompt("fierce")).toMatch(/戰友 Bestie/);
+    expect(activeSystemPrompt("fierce")).toMatch(/毒舌戰友/);
     expect(activeSystemPrompt("fierce")).not.toEqual(activeSystemPrompt("gentle"));
     expect(buildOpenRouterSystemPrompt("fierce")).toMatch(/100% 香港網絡廣東話口語/);
+    expect(buildOpenRouterSystemPrompt("gentle")).toMatch(/【粵語用字規範】/);
+    expect(buildOpenRouterSystemPrompt("wise")).toMatch(/【粵語用字規範】/);
     expect(buildOpenRouterSystemPrompt("gentle")).toMatch(/情緒接納|微小下一步/);
-    expect(buildOpenRouterSystemPrompt("fierce")).toMatch(/破局|底線|打抱不平/);
+    expect(buildOpenRouterSystemPrompt("fierce")).toMatch(/毒舌戰友|一針見血|戀愛腦/);
+    expect(buildOpenRouterSystemPrompt("fierce")).toMatch(/底線|停損|打抱不平/);
     expect(buildOpenRouterSystemPrompt("wise")).toMatch(/Pro\/Con|兩步走|可控/);
     expect(buildOpenRouterSystemPrompt("gentle")).toMatch(/全角色共通/);
     expect(buildOpenRouterSystemPrompt("wise")).toMatch(/理性 Bestie/);
