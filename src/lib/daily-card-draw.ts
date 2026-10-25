@@ -73,6 +73,16 @@ export function clearDrawnCardIds(persona?: PersonaId) {
   writeStorage(DRAWN_CARD_IDS_KEY, JSON.stringify([]));
 }
 
+/** Wipe soul-card draw queues, dynamic cards, and legacy draw keys. */
+export function clearSoulCardLocalState(): void {
+  if (typeof localStorage === "undefined") return;
+  clearDrawnCardIds();
+  localStorage.removeItem(DYNAMIC_SOUL_CARDS_KEY);
+  localStorage.removeItem(DRAWN_CARD_IDS_KEY);
+  localStorage.removeItem(DRAWN_CARDS_BY_PERSONA_KEY);
+  localStorage.removeItem(DAILY_CARD_ID_KEY);
+}
+
 export function markCardDrawn(id: string, persona: PersonaId) {
   const store = readDrawnByPersona();
   const ids = store[persona];

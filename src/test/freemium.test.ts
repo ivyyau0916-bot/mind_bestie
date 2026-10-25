@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  DAILY_CARD_DRAWS_BY_PERSONA_KEY,
   DAILY_CHAT_BY_PERSONA_KEY,
   DAILY_CHAT_COUNT_KEY,
   FREE_DAILY_CHAT_LIMIT,
@@ -91,15 +92,15 @@ describe("Freemium daily chat limits", () => {
     expect(getDailyCardDrawState(true, "fierce", now).canDraw).toBe(true);
   });
 
-  it("documents quota keys that privacy reset must preserve", () => {
+  it("documents chat quota keys preserved on privacy reset", () => {
     const now = new Date("2026-10-23T12:00:00");
     for (let i = 0; i < 5; i++) incrementPersonaDailyChatCount("gentle", now);
     incrementTrialChatCount("fierce");
-    saveDailyCardDraw({ id: "g1", quote: "test" }, "gentle", now);
     const snapshot = Object.fromEntries(
       USAGE_QUOTA_PRESERVE_KEYS.map((key) => [key, localStorage.getItem(key)]),
     );
     expect(snapshot[DAILY_CHAT_BY_PERSONA_KEY]).toContain("gentle");
     expect(snapshot[TRIAL_CHAT_COUNTS_KEY]).toBeTruthy();
+    expect(USAGE_QUOTA_PRESERVE_KEYS).not.toContain(DAILY_CARD_DRAWS_BY_PERSONA_KEY);
   });
 });

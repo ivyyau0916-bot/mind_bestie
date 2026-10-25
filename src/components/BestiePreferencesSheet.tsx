@@ -22,7 +22,8 @@ import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { useAppSettings } from "@/lib/app-settings-context";
 import { useStripeCheckout } from "@/lib/stripe-checkout-context";
-import { clearBestieAccountData, normalizeUserName } from "@/lib/bestie-account";
+import { resetAllUserAppData } from "@/lib/app-data-reset";
+import { normalizeUserName } from "@/lib/bestie-account";
 import { useBestieAccount } from "@/lib/bestie-account-context";
 import {
   ensureNotificationPermission,
@@ -470,7 +471,9 @@ export function BestiePreferencesSheet() {
                 <p>此操作將永久刪除：</p>
                 <ol className="list-decimal space-y-1 pl-4">
                   <li>所有 Bestie 傾訴紀錄與心情日記</li>
-                  <li>本機暱稱、靈魂卡盒紀錄與部分個人設定</li>
+                  <li>靈魂抽卡紀錄與今日抽卡狀態</li>
+                  <li>每日微光打卡、連續天數與足跡</li>
+                  <li>本機暱稱、靈魂卡盒與其他互動暫存</li>
                 </ol>
                 <p>確定要繼續嗎？</p>
               </div>
@@ -484,8 +487,8 @@ export function BestiePreferencesSheet() {
               className="w-full rounded-2xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
                 clearAll();
-                clearBestieAccountData();
-                toast("已重置本機聊天與日記資料");
+                resetAllUserAppData();
+                toast("已重置本機資料（聊天、抽卡、微光與日記）");
                 setClearAllConfirmOpen(false);
                 setPreferencesOpen(false);
                 window.location.reload();

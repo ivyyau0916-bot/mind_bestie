@@ -124,7 +124,8 @@ type Store = {
 };
 
 const Ctx = createContext<Store | null>(null);
-const KEY = "mood-weather-v1";
+export const MOOD_APP_STORAGE_KEY = "mood-weather-v1";
+const KEY = MOOD_APP_STORAGE_KEY;
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;

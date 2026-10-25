@@ -278,6 +278,15 @@ export function loadSelfCareProgress(dateKey = todayDateKey()): SelfCareState {
   return { dateKey, ...record };
 }
 
+/** Clear daily glimmer check-ins, streaks, and calendar footprint data. */
+export function clearSelfCareLocalData(): void {
+  if (typeof localStorage === "undefined") return;
+  localStorage.removeItem(SELF_CARE_STATE_KEY);
+  localStorage.removeItem(SELF_CARE_DAILY_RECORDS_KEY);
+  localStorage.removeItem(SELF_CARE_STREAK_KEY);
+  localStorage.removeItem(SELF_CARE_LAST_COMPLETE_KEY);
+}
+
 export function getSelfCareStreak(): number {
   if (typeof localStorage === "undefined") return 0;
   const raw = localStorage.getItem(SELF_CARE_STREAK_KEY);

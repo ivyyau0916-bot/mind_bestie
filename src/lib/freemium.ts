@@ -327,15 +327,12 @@ export function clearTrialChatCounts(): void {
  * Keys that must survive「重設／清除資料」— prevents resetting daily free chat or draw quotas.
  * Registration trial length uses Supabase Auth `user.created_at` (not cleared here).
  */
+/** Chat trial / daily limits only — soul-card draws reset on「清除所有資料」. */
 export const USAGE_QUOTA_PRESERVE_KEYS = [
   DAILY_CHAT_COUNT_KEY,
   LAST_CHAT_DATE_KEY,
   DAILY_CHAT_BY_PERSONA_KEY,
   TRIAL_CHAT_COUNTS_KEY,
-  DAILY_CARD_DRAWS_BY_PERSONA_KEY,
-  DAILY_CARD_DATE_KEY,
-  DAILY_CARD_QUOTE_KEY,
-  DAILY_CARD_ID_KEY,
 ] as const;
 
 export function buildTrialExhaustedVipMessage(persona: PersonaId): string {
