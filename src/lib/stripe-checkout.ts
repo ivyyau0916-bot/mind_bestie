@@ -31,5 +31,5 @@ export function openStripeCheckout(email?: string | null): boolean {
 
 /** Configure this as the Payment Link success URL in Stripe Dashboard. */
 export function buildStripeSuccessReturnUrl(origin = typeof window !== "undefined" ? window.location.origin : ""): string {
-  return `${origin}/profile?vip=success`;
+  return `${origin}/?success=true`;
 }

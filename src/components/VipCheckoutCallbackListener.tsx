@@ -8,7 +8,7 @@ import {
   stripCheckoutSuccessFromUrl,
 } from "@/lib/vip-subscription";
 
-/** Global Stripe return-url handler (?vip=success | ?pay_status=success). */
+/** Global Stripe return-url handler (?success=true | ?vip=success | ?pay_status=success). */
 export function VipCheckoutCallbackListener() {
   const { setIsVip } = useMood();
   const { refreshVipFromAccount } = useBestieAuth();

@@ -30,9 +30,11 @@ export function VipCelebrationDialog({ open, onOpenChange }: VipCelebrationDialo
           >
             <Sparkles className="size-6 text-amber-500/90" />
           </div>
-          <DialogTitle className="font-display text-xl leading-snug tracking-wide">VIP 已開通</DialogTitle>
+          <DialogTitle className="font-display text-xl leading-snug tracking-wide">
+            🎉 恭喜您成功升級為 VIP 會員！
+          </DialogTitle>
           <DialogDescription className="text-[15px] leading-relaxed text-stone-700 dark:text-stone-200">
-            🎉 恭喜！VIP 尊尚會員已順利開通。全 3 位 Bestie（溫柔、戰友、理性）與每日靈魂金句卡片已全部解鎖 ✨
+            全 3 位 Bestie（溫柔、戰友、理性）無限傾訴，每日靈魂金句卡片已全部解鎖 ✨
           </DialogDescription>
         </DialogHeader>
         <Button type="button" className="w-full rounded-2xl font-medium" onClick={() => onOpenChange(false)}>

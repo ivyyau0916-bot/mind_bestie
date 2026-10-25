@@ -27,7 +27,9 @@ describe("VIP subscription storage", () => {
   it("detects Stripe success query params", () => {
     expect(isStripeCheckoutSuccessParams(new URLSearchParams("vip=success"))).toBe(true);
     expect(isStripeCheckoutSuccessParams(new URLSearchParams("pay_status=success"))).toBe(true);
+    expect(isStripeCheckoutSuccessParams(new URLSearchParams("success=true"))).toBe(true);
     expect(isStripeCheckoutSuccessParams(new URLSearchParams("vip=pending"))).toBe(false);
+    expect(isStripeCheckoutSuccessParams(new URLSearchParams("success=false"))).toBe(false);
   });
 
   it("clears VIP membership", () => {

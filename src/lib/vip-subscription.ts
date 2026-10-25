@@ -32,7 +32,9 @@ export function clearVipMembership(): void {
 }
 
 export function isStripeCheckoutSuccessParams(params: URLSearchParams): boolean {
-  return params.get("vip") === "success" || params.get("pay_status") === "success";
+  if (params.get("vip") === "success" || params.get("pay_status") === "success") return true;
+  const success = params.get("success");
+  return success === "true" || success === "1";
 }
 
 export function stripCheckoutSuccessFromUrl(): void {
@@ -40,6 +42,7 @@ export function stripCheckoutSuccessFromUrl(): void {
   const url = new URL(window.location.href);
   url.searchParams.delete("vip");
   url.searchParams.delete("pay_status");
+  url.searchParams.delete("success");
   const search = url.searchParams.toString();
   const next = url.pathname + (search ? `?${search}` : "") + url.hash;
   window.history.replaceState({}, document.title, next);
