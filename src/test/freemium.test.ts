@@ -10,6 +10,7 @@ import {
   getDailyChatCount,
   getTrialMessagesRemaining,
   incrementDailyChatCount,
+  incrementPersonaDailyChatCount,
   incrementTrialChatCount,
   isPersonaChatUnlocked,
   isPersonaTrialLocked,
@@ -60,11 +61,11 @@ describe("Freemium daily chat limits", () => {
     expect(isPersonaChatUnlocked("wise", false, null)).toBe(true);
   });
 
-  it("uses shared daily pool for all personas during registration trial", () => {
-    for (let i = 0; i < FREE_DAILY_CHAT_LIMIT; i++) incrementDailyChatCount();
+  it("tracks independent daily chat per persona during registration trial", () => {
+    for (let i = 0; i < FREE_DAILY_CHAT_LIMIT; i++) incrementPersonaDailyChatCount("fierce");
     expect(canSendChatAsFreeUser("fierce", null)).toBe(false);
-    expect(canSendChatAsFreeUser("wise", null)).toBe(false);
-    expect(canSendChatAsFreeUser("gentle", null)).toBe(false);
+    expect(canSendChatAsFreeUser("wise", null)).toBe(true);
+    expect(canSendChatAsFreeUser("gentle", null)).toBe(true);
   });
 
   it("tracks daily draws independently per Bestie role", () => {

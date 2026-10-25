@@ -45,7 +45,7 @@ export function BestieOnboardingDialog({ onComplete }: BestieOnboardingDialogPro
                 </p>
                 <ul className="mt-1.5 list-inside list-disc space-y-0.5 text-[13px]">
                   <li>溫柔、毒舌、理智三位 Bestie 全部解鎖</li>
-                  <li>每日 20 次 AI 傾訴額度</li>
+                  <li>每位 Bestie 每日各 20 次 AI 傾訴（分開計算）</li>
                   <li>每位 Bestie 每日可各抽卡一次</li>
                 </ul>
               </div>

@@ -12,6 +12,10 @@ export type TrialChatCounts = { fierce: number; wise: number };
 
 export const DAILY_CHAT_COUNT_KEY = "daily_chat_count";
 export const LAST_CHAT_DATE_KEY = "last_chat_date";
+/** Per-Bestie daily chat: { gentle: { "YYYY-MM-DD": count }, ... } */
+export const DAILY_CHAT_BY_PERSONA_KEY = "bestie_daily_chat_by_persona";
+
+const DAILY_CHAT_PERSONAS: PersonaId[] = ["gentle", "fierce", "wise"];
 export const DAILY_CARD_DATE_KEY = "bestie_daily_card_date";
 export const DAILY_CARD_QUOTE_KEY = "bestie_daily_card_quote";
 export const DAILY_CARD_ID_KEY = "bestie_daily_card_id";
@@ -55,7 +59,79 @@ function writeStorage(key: string, value: string) {
   localStorage.setItem(key, value);
 }
 
-/** Reset counter when calendar day changes (HK local device date). */
+function emptyDailyChatByPersona(): Record<PersonaId, Record<string, number>> {
+  return { gentle: {}, fierce: {}, wise: {} };
+}
+
+function readDailyChatByPersona(): Record<PersonaId, Record<string, number>> {
+  try {
+    const raw = readStorage(DAILY_CHAT_BY_PERSONA_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<Record<PersonaId, Record<string, number>>>;
+      const store = emptyDailyChatByPersona();
+      for (const p of DAILY_CHAT_PERSONAS) {
+        const bucket = parsed[p];
+        if (bucket && typeof bucket === "object") {
+          store[p] = Object.fromEntries(
+            Object.entries(bucket).filter(
+              (entry): entry is [string, number] =>
+                typeof entry[0] === "string" && typeof entry[1] === "number" && entry[1] >= 0,
+            ),
+          );
+        }
+      }
+      return store;
+    }
+  } catch {
+    /* fall through */
+  }
+  return emptyDailyChatByPersona();
+}
+
+function writeDailyChatByPersona(store: Record<PersonaId, Record<string, number>>) {
+  writeStorage(DAILY_CHAT_BY_PERSONA_KEY, JSON.stringify(store));
+}
+
+/** 試用期內三位 Bestie 各 20 次／日；試用期後僅溫柔用每日池。 */
+export function usesPerPersonaDailyChatLimit(persona: PersonaId, createdAt?: string | null): boolean {
+  if (isInRegistrationTrial(false, createdAt)) return true;
+  return persona === "gentle";
+}
+
+function migrateLegacyGentleDailyIntoPersonaStore(now = new Date()) {
+  const today = todayDateKey(now);
+  const last = readStorage(LAST_CHAT_DATE_KEY);
+  if (last !== today) return;
+  const store = readDailyChatByPersona();
+  if (store.gentle[today] != null) return;
+  const legacy = readStorage(DAILY_CHAT_COUNT_KEY);
+  const n = legacy ? Number.parseInt(legacy, 10) : 0;
+  if (!Number.isFinite(n) || n <= 0) return;
+  store.gentle[today] = n;
+  writeDailyChatByPersona(store);
+}
+
+export function getPersonaDailyChatCount(persona: PersonaId, now = new Date()): number {
+  migrateLegacyGentleDailyIntoPersonaStore(now);
+  const today = todayDateKey(now);
+  const store = readDailyChatByPersona();
+  return store[persona][today] ?? 0;
+}
+
+export function incrementPersonaDailyChatCount(persona: PersonaId, now = new Date()): number {
+  const today = todayDateKey(now);
+  const store = readDailyChatByPersona();
+  const next = (store[persona][today] ?? 0) + 1;
+  store[persona][today] = next;
+  writeDailyChatByPersona(store);
+  if (persona === "gentle") {
+    writeStorage(LAST_CHAT_DATE_KEY, today);
+    writeStorage(DAILY_CHAT_COUNT_KEY, String(next));
+  }
+  return next;
+}
+
+/** Reset counter when calendar day changes (HK local device date). Legacy gentle-only key. */
 export function resetDailyChatIfNeeded(now = new Date()): number {
   const today = todayDateKey(now);
   const last = readStorage(LAST_CHAT_DATE_KEY);
@@ -74,23 +150,42 @@ export function getDailyChatCount(): number {
 }
 
 export function incrementDailyChatCount(): number {
-  resetDailyChatIfNeeded();
-  const next = getDailyChatCount() + 1;
-  writeStorage(DAILY_CHAT_COUNT_KEY, String(next));
-  writeStorage(LAST_CHAT_DATE_KEY, todayDateKey());
-  return next;
+  return incrementPersonaDailyChatCount("gentle");
 }
 
-export function remainingFreeChats(isVip: boolean, now = new Date()): number {
+export function remainingFreeChatsForPersona(
+  persona: PersonaId,
+  isVip: boolean,
+  createdAt?: string | null,
+  now = new Date(),
+): number {
   if (isVip) return Number.POSITIVE_INFINITY;
-  resetDailyChatIfNeeded(now);
-  return Math.max(0, FREE_DAILY_CHAT_LIMIT - getDailyChatCount());
+  if (usesPerPersonaDailyChatLimit(persona, createdAt)) {
+    return Math.max(0, FREE_DAILY_CHAT_LIMIT - getPersonaDailyChatCount(persona, now));
+  }
+  return Math.max(0, TRIAL_CHAT_LIMIT_PER_PERSONA - getTrialMessagesUsed(persona));
+}
+
+/** @deprecated Prefer remainingFreeChatsForPersona("gentle", …) */
+export function remainingFreeChats(isVip: boolean, now = new Date()): number {
+  return remainingFreeChatsForPersona("gentle", isVip, null, now);
 }
 
 export function canSendFreeChat(isVip: boolean, now = new Date()): boolean {
+  return canSendFreeChatForPersona("gentle", isVip, null, now);
+}
+
+export function canSendFreeChatForPersona(
+  persona: PersonaId,
+  isVip: boolean,
+  createdAt?: string | null,
+  now = new Date(),
+): boolean {
   if (isVip) return true;
-  resetDailyChatIfNeeded(now);
-  return getDailyChatCount() < FREE_DAILY_CHAT_LIMIT;
+  if (usesPerPersonaDailyChatLimit(persona, createdAt)) {
+    return getPersonaDailyChatCount(persona, now) < FREE_DAILY_CHAT_LIMIT;
+  }
+  return getTrialMessagesUsed(persona) < TRIAL_CHAT_LIMIT_PER_PERSONA;
 }
 
 function emptyTrialCounts(): TrialChatCounts {
@@ -160,25 +255,58 @@ export function isPersonaChatUnlocked(
   return !isPersonaTrialLocked(persona, false);
 }
 
-/** Free-user send gate: 試用期內共用每日 20 次；否則 gentle 用每日池、fierce/wise 用各 5 則試用。 */
+/** Free-user send gate: 試用期內各角色每日 20 次；試用期後 gentle 每日 20、fierce/wise 鎖定或 5 則試用。 */
 export function canSendChatAsFreeUser(
   persona: PersonaId,
   createdAt?: string | null,
   now = new Date(),
 ): boolean {
   if (!isPersonaChatUnlocked(persona, false, createdAt)) return false;
-  if (isInRegistrationTrial(false, createdAt)) return canSendFreeChat(false, now);
-  if (persona === "gentle") return canSendFreeChat(false, now);
-  return getTrialMessagesUsed(persona) < TRIAL_CHAT_LIMIT_PER_PERSONA;
+  return canSendFreeChatForPersona(persona, false, createdAt, now);
 }
 
-/** 非 VIP 發送後遞增用量（試用期內一律計入每日 20 次）。 */
-export function recordFreeChatSend(persona: PersonaId, createdAt?: string | null): void {
-  if (isInRegistrationTrial(false, createdAt) || persona === "gentle") {
-    incrementDailyChatCount();
+/** 非 VIP 發送後遞增用量（試用期內按角色分開計每日 20 次）。 */
+export function recordFreeChatSend(persona: PersonaId, createdAt?: string | null, now = new Date()): void {
+  if (usesPerPersonaDailyChatLimit(persona, createdAt)) {
+    incrementPersonaDailyChatCount(persona, now);
     return;
   }
   incrementTrialChatCount(persona);
+}
+
+export type FreeUserAccountStatus = {
+  tierTitle: string;
+  quotaLine: string;
+  footnote: string;
+  remaining: number;
+  usedToday: number;
+};
+
+/** 設定／帳號區塊：免費用戶身份與剩餘對話文案。 */
+export function getFreeUserAccountStatus(
+  persona: PersonaId,
+  createdAt?: string | null,
+  now = new Date(),
+): FreeUserAccountStatus {
+  const inTrial = isInRegistrationTrial(false, createdAt);
+  if (inTrial) {
+    const remaining = remainingFreeChatsForPersona(persona, false, createdAt, now);
+    return {
+      tierTitle: "免費用戶（3 天完整試用中 ✨）",
+      quotaLine: `當前角色今日剩餘對話：${remaining} / ${FREE_DAILY_CHAT_LIMIT} 次`,
+      footnote: "三個角色每日各享 20 次對話（分別計算，不共用）。",
+      remaining,
+      usedToday: getPersonaDailyChatCount(persona, now),
+    };
+  }
+  const gentleRemaining = remainingFreeChatsForPersona("gentle", false, createdAt, now);
+  return {
+    tierTitle: "免費用戶",
+    quotaLine: `溫柔角色今日剩餘對話：${gentleRemaining} / ${FREE_DAILY_CHAT_LIMIT} 次`,
+    footnote: "升級 VIP 解鎖毒舌與理智角色。",
+    remaining: gentleRemaining,
+    usedToday: getPersonaDailyChatCount("gentle", now),
+  };
 }
 
 export function incrementTrialChatCount(persona: PersonaId): number {

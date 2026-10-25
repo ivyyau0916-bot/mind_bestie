@@ -85,9 +85,10 @@ describe("Language and localization rules", () => {
     expect(activeSystemPrompt("fierce")).toMatch(/戰友 Bestie/);
     expect(activeSystemPrompt("fierce")).not.toEqual(activeSystemPrompt("gentle"));
     expect(buildOpenRouterSystemPrompt("fierce")).toMatch(/100% 香港網絡廣東話口語/);
-    expect(buildOpenRouterSystemPrompt("gentle")).toMatch(/情緒接納|70%/);
-    expect(buildOpenRouterSystemPrompt("fierce")).toMatch(/義氣相挺|同仇敵忾/);
-    expect(buildOpenRouterSystemPrompt("wise")).toMatch(/可控|不可控/);
+    expect(buildOpenRouterSystemPrompt("gentle")).toMatch(/情緒接納|微小下一步/);
+    expect(buildOpenRouterSystemPrompt("fierce")).toMatch(/破局|底線|打抱不平/);
+    expect(buildOpenRouterSystemPrompt("wise")).toMatch(/Pro\/Con|兩步走|可控/);
+    expect(buildOpenRouterSystemPrompt("gentle")).toMatch(/全角色共通/);
     expect(buildOpenRouterSystemPrompt("wise")).toMatch(/理性 Bestie/);
     expect(buildOpenRouterSystemPrompt("gentle")).toMatch(/打卡|解壓|走心|給力/);
     expect(buildOpenRouterSystemPrompt("gentle", "", "阿樂")).toMatch(/阿樂/);

@@ -1,5 +1,5 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bell, Crown, MessageSquareOff, Moon, Phone, Shield, Sun, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { DailyCardPersonaPicker } from "@/components/daily-card/DailyCardPersonaPicker";
@@ -40,7 +40,7 @@ import {
   setMorningNotifTime,
   syncCareNotifications,
 } from "@/lib/care-notifications";
-import { FREE_DAILY_CHAT_LIMIT, VIP_PRICE_LABEL } from "@/lib/freemium";
+import { getFreeUserAccountStatus, VIP_PRICE_LABEL } from "@/lib/freemium";
 import { VIP_ACTIVE_STATUS_LABEL } from "@/lib/vip-subscription";
 import { AUTH_PRIVACY_NOTE } from "@/lib/auth-privacy";
 import { useBestieAuth } from "@/lib/bestie-auth-context";
@@ -55,8 +55,18 @@ const HOTLINES = [
 
 export function BestiePreferencesSheet() {
   const { preferencesOpen, setPreferencesOpen } = useAppSettings();
-  const { theme, setTheme, clearAll, clearChat, isVip, freeChatsRemaining, dailyChatCount, persona, setPersona } =
-    useMood();
+  const {
+    theme,
+    setTheme,
+    clearAll,
+    clearChat,
+    isVip,
+    dailyChatCount,
+    freeChatsRemaining,
+    persona,
+    setPersona,
+    trialUsageRevision,
+  } = useMood();
   const { userName, setUserName } = useBestieAccount();
   const { configured: authConfigured, user: authUser, loading: authLoading, openAuth, signOut } = useBestieAuth();
   const [nicknameDraft, setNicknameDraft] = useState(userName ?? "");
@@ -118,8 +128,11 @@ export function BestiePreferencesSheet() {
     await syncCareNotifications();
   }, []);
 
-  const usedToday = isVip ? 0 : Math.min(dailyChatCount, FREE_DAILY_CHAT_LIMIT);
-  const freeRemainingLabel = `今日剩餘對話：${freeChatsRemaining}/${FREE_DAILY_CHAT_LIMIT} 次`;
+  const freeAccountStatus = useMemo(
+    () => (!isVip ? getFreeUserAccountStatus(persona, authUser?.created_at) : null),
+    [isVip, persona, authUser?.created_at, freeChatsRemaining, dailyChatCount, trialUsageRevision],
+  );
+  const usedToday = isVip ? 0 : (freeAccountStatus?.usedToday ?? dailyChatCount);
   const vipBenefitCopy = "解鎖全 3 位 Bestie 專屬傾訴，每天可分別抽取 3 張靈魂金句卡片";
 
   return (
@@ -205,6 +218,7 @@ export function BestiePreferencesSheet() {
                 <DailyCardPersonaPicker
                   persona={persona}
                   isVip={isVip}
+                  createdAt={authUser?.created_at}
                   onSelect={(id) => setPersona(id)}
                   onLockedSelect={() => setPersonaLockOpen(true)}
                 />
@@ -248,12 +262,15 @@ export function BestiePreferencesSheet() {
                     <p className="text-[11px] leading-relaxed text-muted-foreground">{AUTH_PRIVACY_NOTE}</p>
                   </div>
                 )}
-                <p className="text-base font-semibold">{isVip ? VIP_ACTIVE_STATUS_LABEL : "免費用戶"}</p>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  {isVip ? vipBenefitCopy : freeRemainingLabel}
+                <p className="text-base font-semibold">
+                  {isVip ? VIP_ACTIVE_STATUS_LABEL : freeAccountStatus?.tierTitle}
                 </p>
-                {!isVip && (
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  {isVip ? vipBenefitCopy : freeAccountStatus?.quotaLine}
+                </p>
+                {!isVip && freeAccountStatus && (
                   <>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{freeAccountStatus.footnote}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">已使用 {usedToday} 次傾訴</p>
                     <Button
                       type="button"

@@ -3,10 +3,10 @@ import { chooseReplyPlan, createPersonaHandoff, createPersonaReply, getPersona, 
 import { detectUserCrisis, getCrisisSafeReply } from "@/lib/crisis-intervention";
 import {
   canSendChatAsFreeUser,
-  getDailyChatCount,
+  getPersonaDailyChatCount,
   isPersonaChatUnlocked,
   recordFreeChatSend,
-  remainingFreeChats,
+  remainingFreeChatsForPersona,
   resetDailyChatIfNeeded,
 } from "@/lib/freemium";
 import { readPersistedAuthUser } from "@/lib/supabase-auth-callback";
@@ -148,10 +148,11 @@ export function MoodProvider({ children }: { children: ReactNode }) {
   const personaRef = useRef<PersonaId>(persona);
   const isVipRef = useRef(isVip);
 
-  const syncUsage = (vip: boolean) => {
+  const syncUsage = (vip: boolean, activePersona: PersonaId = personaRef.current) => {
     resetDailyChatIfNeeded();
-    setDailyChatCount(getDailyChatCount());
-    return remainingFreeChats(vip);
+    const createdAt = readPersistedAuthUser()?.created_at;
+    setDailyChatCount(getPersonaDailyChatCount(activePersona));
+    return remainingFreeChatsForPersona(activePersona, vip, createdAt);
   };
 
   useEffect(() => {
@@ -230,7 +231,7 @@ export function MoodProvider({ children }: { children: ReactNode }) {
     }
     if (!isCrisis && !vip) {
       recordFreeChatSend(activePersona, createdAt);
-      setDailyChatCount(getDailyChatCount());
+      syncUsage(vip, activePersona);
       if (!isInRegistrationTrial(false, createdAt) && activePersona !== "gentle") {
         setTrialUsageRevision((v) => v + 1);
       }
@@ -317,6 +318,7 @@ export function MoodProvider({ children }: { children: ReactNode }) {
     if (!isPersonaChatUnlocked(next, isVipRef.current, createdAt)) return false;
     personaRef.current = next;
     setPersonaState(next);
+    syncUsage(isVipRef.current, next);
     // Keep old bubbles; only swap the untouched welcome, otherwise drop in a live handoff in the new voice.
     setMessages((current) => {
       if (current.length === 1 && current[0]?.role === "ai" && current[0]?.time === 0) {
@@ -380,7 +382,11 @@ export function MoodProvider({ children }: { children: ReactNode }) {
         vipStartDate,
         setIsVip,
         dailyChatCount,
-        freeChatsRemaining: remainingFreeChats(isVip),
+        freeChatsRemaining: remainingFreeChatsForPersona(
+          persona,
+          isVip,
+          readPersistedAuthUser()?.created_at,
+        ),
         trialUsageRevision,
         setPersona,
         isReplying,

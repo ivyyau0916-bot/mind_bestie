@@ -6,12 +6,13 @@ import { VipUnlockDialog } from "@/components/VipUnlockDialog";
 import { useStripeCheckout } from "@/lib/use-stripe-checkout";
 import { detectUserCrisis } from "@/lib/crisis-intervention";
 import {
-  canSendFreeChat,
+  canSendChatAsFreeUser,
   getTrialMessagesRemaining,
   isPersonaChatUnlocked,
   isPersonaTrialLocked,
   QUOTA_EXHAUSTED_INLINE_MESSAGE,
   TRIAL_CHAT_LIMIT_PER_PERSONA,
+  usesPerPersonaDailyChatLimit,
 } from "@/lib/freemium";
 import { useBestieAuth } from "@/lib/bestie-auth-context";
 import { canAccessCharacter, isInRegistrationTrial, personaToCharacterId } from "@/lib/trial-limits";
@@ -73,7 +74,7 @@ function ChatPage() {
   const active = getPersona(persona);
   const goStripeCheckout = useStripeCheckout();
 
-  const usesDailyChatPool = !isVip && (inRegistrationTrial || persona === "gentle");
+  const usesDailyChatPool = !isVip && usesPerPersonaDailyChatLimit(persona, createdAt);
 
   const trialBlocked = useMemo(() => {
     if (isVip || inRegistrationTrial) return false;
@@ -81,7 +82,7 @@ function ChatPage() {
     return isPersonaTrialLocked(persona, isVip);
   }, [isVip, inRegistrationTrial, persona, trialUsageRevision]);
 
-  const quotaBlocked = usesDailyChatPool && !canSendFreeChat(false);
+  const quotaBlocked = usesDailyChatPool && !canSendChatAsFreeUser(persona, createdAt);
   const sendBlocked = trialBlocked || quotaBlocked;
   const crisisDraft = detectUserCrisis(text);
   const inputDisabled = isReplying || (sendBlocked && !crisisDraft);

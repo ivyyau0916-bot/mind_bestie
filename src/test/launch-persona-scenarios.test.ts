@@ -31,7 +31,7 @@ describe("Launch system prompts", () => {
     expect(prompt).toMatch(/【真人對話硬性法則/);
     expect(prompt).toMatch(/【角色扮演真實性邊界/);
     if (id === "gentle") expect(prompt).toMatch(/哎呀|🫂|陪住你/);
-    if (id === "fierce") expect(prompt).toMatch(/下！|過份|撐你|義氣相挺/);
+    if (id === "fierce") expect(prompt).toMatch(/下！|過份|撐你|底線|破局/);
     if (id === "wise") expect(prompt).toMatch(/釐清|優先|試下|下一步/);
   });
 });
