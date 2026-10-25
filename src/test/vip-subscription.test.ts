@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   VIP_CHECKOUT_CELEBRATION_PENDING_KEY,
   VIP_START_DATE_KEY,
+  VIP_PAID_LOCALLY_KEY,
   VIP_STORAGE_KEY,
   activateVipMembership,
   clearVipMembership,
@@ -43,6 +44,7 @@ describe("VIP subscription storage", () => {
     window.history.replaceState({}, "", "/chat?success=true");
     expect(grantVipMembershipFromCheckoutReturn()).toBe(true);
     expect(readStoredIsVip()).toBe(true);
+    expect(localStorage.getItem(VIP_PAID_LOCALLY_KEY)).toBe("1");
     expect(sessionStorage.getItem(VIP_CHECKOUT_CELEBRATION_PENDING_KEY)).toBe("1");
     expect(window.location.search).toBe("");
   });

@@ -34,7 +34,7 @@ export function VipCelebrationDialog({ open, onOpenChange }: VipCelebrationDialo
             🎉 恭喜您成功升級為 VIP 會員！
           </DialogTitle>
           <DialogDescription className="text-[15px] leading-relaxed text-stone-700 dark:text-stone-200">
-            全 3 位 Bestie（溫柔、戰友、理性）無限傾訴，每日靈魂金句卡片已全部解鎖 ✨
+            您已成功開通 VIP 權限，全角色無限對話已解鎖！三位 Bestie 靈魂金句卡亦已全面開放 ✨
           </DialogDescription>
         </DialogHeader>
         <Button type="button" className="w-full rounded-2xl font-medium" onClick={() => onOpenChange(false)}>

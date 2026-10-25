@@ -2,8 +2,21 @@ import { todayDateKey } from "@/lib/freemium";
 
 export const VIP_STORAGE_KEY = "isVIP";
 export const VIP_START_DATE_KEY = "vipStartDate";
+/** Set only after Stripe success URL / confirmed checkout — not on Magic Link login. */
+export const VIP_PAID_LOCALLY_KEY = "bestie_vip_checkout_paid";
 
-export const VIP_ACTIVE_STATUS_LABEL = "👑 VIP 尊尚會員生效中";
+export const VIP_ACTIVE_STATUS_LABEL = "當前狀態：VIP 會員";
+export const VIP_CHECKOUT_SUCCESS_TOAST =
+  "🎉 恭喜！您已成功開通 VIP 權限，全角色無限對話已解鎖！";
+
+export function hasLocalPaidVipProof(): boolean {
+  return readStoredIsVip() && localStorage.getItem(VIP_PAID_LOCALLY_KEY) === "1";
+}
+
+export function hasStripeSuccessInUrl(): boolean {
+  if (typeof window === "undefined") return false;
+  return isStripeCheckoutSuccessParams(readCheckoutReturnSearchParams(window.location));
+}
 
 export function readStoredIsVip(): boolean {
   if (typeof localStorage === "undefined") return false;
@@ -29,6 +42,7 @@ export function clearVipMembership(): void {
   if (typeof localStorage === "undefined") return;
   localStorage.removeItem(VIP_STORAGE_KEY);
   localStorage.removeItem(VIP_START_DATE_KEY);
+  localStorage.removeItem(VIP_PAID_LOCALLY_KEY);
 }
 
 /** Set when checkout return URL was handled (celebration dialog after URL strip). */
@@ -157,8 +171,23 @@ function markVipCelebrationPending(): void {
 
 function completeCheckoutVipActivation(): void {
   activateVipMembership();
+  try {
+    localStorage.setItem(VIP_PAID_LOCALLY_KEY, "1");
+  } catch {
+    /* ignore */
+  }
   clearStripeCheckoutPending();
   markVipCelebrationPending();
+}
+
+/** Idempotent: activate from ?success=true (etc.) and strip query params. */
+export function activateVipFromStripeSuccessUrl(): StripeCheckoutReturnResult {
+  if (typeof window === "undefined" || !hasStripeSuccessInUrl()) {
+    return { activated: false, showCelebration: false, promptPaymentConfirm: false };
+  }
+  completeCheckoutVipActivation();
+  stripCheckoutSuccessFromUrl();
+  return { activated: true, showCelebration: true, promptPaymentConfirm: false };
 }
 
 export type StripeCheckoutReturnResult = {
@@ -175,12 +204,8 @@ export function processStripeCheckoutReturn(now = Date.now()): StripeCheckoutRet
     return { activated: false, showCelebration: false, promptPaymentConfirm: false };
   }
 
-  const params = readCheckoutReturnSearchParams(window.location);
-  if (isStripeCheckoutSuccessParams(params)) {
-    completeCheckoutVipActivation();
-    stripCheckoutSuccessFromUrl();
-    return { activated: true, showCelebration: true, promptPaymentConfirm: false };
-  }
+  const fromSuccessUrl = activateVipFromStripeSuccessUrl();
+  if (fromSuccessUrl.activated) return fromSuccessUrl;
 
   const celebrateOnly = consumeVipCheckoutCelebrationPending();
 

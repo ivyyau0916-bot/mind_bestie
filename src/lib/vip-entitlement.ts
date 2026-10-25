@@ -1,8 +1,12 @@
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import {
+  activateVipFromStripeSuccessUrl,
   activateVipMembership,
   clearStripeCheckoutPending,
   clearVipMembership,
+  hasLocalPaidVipProof,
+  hasStripeSuccessInUrl,
+  VIP_PAID_LOCALLY_KEY,
 } from "@/lib/vip-subscription";
 
 export function normalizeEntitlementEmail(email: string): string {
@@ -69,22 +73,43 @@ export async function syncVipAfterCheckoutReturn(email: string | null | undefine
 }
 
 /**
- * After Email login / session refresh: VIP only if Supabase `vip_members` says so.
- * Clears stale local VIP flags (Magic Link must never grant VIP by itself).
+ * Session VIP sync: Supabase entitlement, Stripe ?success=true return, or verified local paid flag.
+ * Magic Link alone never sets VIP (no paid proof).
  */
 export async function applyVipEntitlementForSession(
   email: string | null | undefined,
 ): Promise<boolean> {
+  if (typeof window !== "undefined" && hasStripeSuccessInUrl()) {
+    activateVipFromStripeSuccessUrl();
+    if (hasCheckoutEmailForEntitlement(email)) {
+      await upsertVipMemberForEmail(email);
+    }
+    return true;
+  }
+
   if (!hasCheckoutEmailForEntitlement(email)) {
+    if (hasLocalPaidVipProof()) return true;
     clearVipMembership();
     clearStripeCheckoutPending();
     return false;
   }
+
   const entitled = await fetchVipEntitlementByEmail(email);
   if (entitled) {
     activateVipMembership();
+    try {
+      localStorage.setItem(VIP_PAID_LOCALLY_KEY, "1");
+    } catch {
+      /* ignore */
+    }
     return true;
   }
+
+  if (hasLocalPaidVipProof()) {
+    await syncVipAfterCheckoutReturn(email);
+    return true;
+  }
+
   clearVipMembership();
   clearStripeCheckoutPending();
   return false;
