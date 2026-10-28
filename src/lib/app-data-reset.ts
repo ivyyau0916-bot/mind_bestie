@@ -15,6 +15,7 @@ import { consumeVipCheckoutResumeAfterLogin } from "@/lib/vip-checkout-after-log
 import {
   clearStripeCheckoutPending,
   VIP_CHECKOUT_CELEBRATION_PENDING_KEY,
+  VIP_PAID_EMAIL_KEY,
   VIP_PAID_LOCALLY_KEY,
   VIP_START_DATE_KEY,
   VIP_STORAGE_KEY,
@@ -22,7 +23,12 @@ import {
 
 export const MOOD_APP_STORAGE_KEY = "mood-weather-v1";
 
-const VIP_PRESERVE_KEYS = [VIP_STORAGE_KEY, VIP_START_DATE_KEY, VIP_PAID_LOCALLY_KEY] as const;
+const VIP_PRESERVE_KEYS = [
+  VIP_STORAGE_KEY,
+  VIP_START_DATE_KEY,
+  VIP_PAID_LOCALLY_KEY,
+  VIP_PAID_EMAIL_KEY,
+] as const;
 
 const SESSION_CLEAR_KEYS = [
   VIP_CHECKOUT_CELEBRATION_PENDING_KEY,

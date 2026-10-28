@@ -2,10 +2,13 @@ import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import {
   activateVipFromStripeSuccessUrl,
   activateVipMembership,
+  bindVipPaidToEmail,
   clearStripeCheckoutPending,
   clearVipMembership,
   hasLocalPaidVipProof,
   hasStripeSuccessInUrl,
+  hasVipPaidProofForEmail,
+  readVipPaidForEmail,
   VIP_PAID_LOCALLY_KEY,
 } from "@/lib/vip-subscription";
 
@@ -13,9 +16,20 @@ export function normalizeEntitlementEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+function isMissingVipMembersTableError(error: { message?: string; code?: string }): boolean {
+  const message = (error.message ?? "").toLowerCase();
+  const code = error.code ?? "";
+  return (
+    code === "PGRST205" ||
+    code === "42P01" ||
+    (message.includes("vip_members") && message.includes("does not exist")) ||
+    message.includes("could not find the table")
+  );
+}
+
 /**
- * Returns true when Supabase `vip_members` has an active row for this email.
- * Populate via Stripe webhook / admin (see supabase/vip_members.sql).
+ * Optional server row in Supabase `vip_members` (see supabase/vip_members.sql).
+ * When the table is not created yet, returns false without breaking login sync.
  */
 export async function fetchVipEntitlementByEmail(email: string | null | undefined): Promise<boolean> {
   if (!email?.trim() || !isSupabaseConfigured()) return false;
@@ -30,7 +44,9 @@ export async function fetchVipEntitlementByEmail(email: string | null | undefine
     .maybeSingle();
 
   if (error) {
-    console.warn("[vip-entitlement]", error.message);
+    if (!isMissingVipMembersTableError(error)) {
+      console.warn("[vip-entitlement]", error.message);
+    }
     return false;
   }
   return Boolean(data?.active);
@@ -65,7 +81,9 @@ export async function upsertVipMemberForEmail(email: string | null | undefined):
   );
 
   if (error) {
-    console.warn("[vip-entitlement] upsert failed", error.message);
+    if (!isMissingVipMembersTableError(error)) {
+      console.warn("[vip-entitlement] upsert failed", error.message);
+    }
     return false;
   }
   return true;
@@ -97,6 +115,7 @@ function persistLocalPaidVipProof(): void {
 async function grantVipForEntitledEmail(normalizedEmail: string): Promise<boolean> {
   activateVipMembership();
   persistLocalPaidVipProof();
+  bindVipPaidToEmail(normalizedEmail);
   await mergeVipMemberRecordForAuthEmail(normalizedEmail);
   return true;
 }
@@ -126,8 +145,16 @@ export async function applyVipEntitlementForSession(
     return grantVipForEntitledEmail(normalizedEmail);
   }
 
-  if (hasLocalPaidVipProof()) {
+  if (hasVipPaidProofForEmail(normalizedEmail)) {
     await syncVipAfterCheckoutReturn(normalizedEmail);
+    activateVipMembership();
+    persistLocalPaidVipProof();
+    bindVipPaidToEmail(normalizedEmail);
+    return true;
+  }
+
+  if (hasLocalPaidVipProof() && !readVipPaidForEmail()) {
+    bindVipPaidToEmail(normalizedEmail);
     activateVipMembership();
     persistLocalPaidVipProof();
     return true;

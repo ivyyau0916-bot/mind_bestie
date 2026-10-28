@@ -4,10 +4,37 @@ export const VIP_STORAGE_KEY = "isVIP";
 export const VIP_START_DATE_KEY = "vipStartDate";
 /** Set only after Stripe success URL / confirmed checkout — not on Magic Link login. */
 export const VIP_PAID_LOCALLY_KEY = "bestie_vip_checkout_paid";
+/** Normalized email that completed VIP checkout — survives sign-out & Google ↔ Email login switch. */
+export const VIP_PAID_EMAIL_KEY = "bestie_vip_paid_for_email";
+/** Written in redirectToStripeCheckout (same value as stripe-checkout STRIPE_CHECKOUT_EMAIL_KEY). */
+const STRIPE_CHECKOUT_EMAIL_KEY = "bestie_stripe_checkout_email";
 
 export const VIP_ACTIVE_STATUS_LABEL = "當前狀態：VIP 會員";
 export const VIP_CHECKOUT_SUCCESS_TOAST =
   "🎉 恭喜！您已成功開通 VIP 權限，全角色無限對話已解鎖！";
+
+export function normalizeVipPaidEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+export function readVipPaidForEmail(): string | null {
+  if (typeof localStorage === "undefined") return null;
+  const raw = localStorage.getItem(VIP_PAID_EMAIL_KEY);
+  return raw?.includes("@") ? raw : null;
+}
+
+export function bindVipPaidToEmail(email: string | null | undefined): void {
+  if (!email?.trim().includes("@") || typeof localStorage === "undefined") return;
+  localStorage.setItem(VIP_PAID_EMAIL_KEY, normalizeVipPaidEmail(email));
+}
+
+/** Paid proof for this mailbox (not tied to Supabase user.id). */
+export function hasVipPaidProofForEmail(email: string | null | undefined): boolean {
+  if (!email?.trim().includes("@")) return false;
+  const bound = readVipPaidForEmail();
+  if (!bound) return false;
+  return normalizeVipPaidEmail(email) === bound;
+}
 
 export function hasLocalPaidVipProof(): boolean {
   return readStoredIsVip() && localStorage.getItem(VIP_PAID_LOCALLY_KEY) === "1";
@@ -43,6 +70,14 @@ export function clearVipMembership(): void {
   localStorage.removeItem(VIP_STORAGE_KEY);
   localStorage.removeItem(VIP_START_DATE_KEY);
   localStorage.removeItem(VIP_PAID_LOCALLY_KEY);
+  localStorage.removeItem(VIP_PAID_EMAIL_KEY);
+}
+
+/** Sign-out: drop active VIP UI flags but keep email-bound paid proof for re-login. */
+export function clearVipSessionFlags(): void {
+  if (typeof localStorage === "undefined") return;
+  localStorage.removeItem(VIP_STORAGE_KEY);
+  localStorage.removeItem(VIP_START_DATE_KEY);
 }
 
 /** Set when checkout return URL was handled (celebration dialog after URL strip). */
@@ -173,6 +208,8 @@ function completeCheckoutVipActivation(): void {
   activateVipMembership();
   try {
     localStorage.setItem(VIP_PAID_LOCALLY_KEY, "1");
+    const checkoutEmail = localStorage.getItem(STRIPE_CHECKOUT_EMAIL_KEY);
+    if (checkoutEmail) bindVipPaidToEmail(checkoutEmail);
   } catch {
     /* ignore */
   }

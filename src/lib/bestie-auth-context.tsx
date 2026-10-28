@@ -29,7 +29,7 @@ import {
 } from "@/lib/supabase-auth-callback";
 import { resolveAuthEmailForEntitlement } from "@/lib/bestie-auth-session";
 import { applyVipEntitlementForSession } from "@/lib/vip-entitlement";
-import { clearVipMembership } from "@/lib/vip-subscription";
+import { clearVipSessionFlags } from "@/lib/vip-subscription";
 import { useMood } from "@/lib/mood-store";
 
 type BestieAuthContextValue = {
@@ -218,7 +218,7 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
     if (supabase) await supabase.auth.signOut();
     setUser(null);
     writePersistedAuthUser(null);
-    clearVipMembership();
+    clearVipSessionFlags();
     setIsVip(false);
   }, [setIsVip]);
 
