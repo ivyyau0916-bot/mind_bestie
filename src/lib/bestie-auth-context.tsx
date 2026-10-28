@@ -10,6 +10,12 @@ import {
 import { toast } from "sonner";
 import { BestieAuthDialog } from "@/components/BestieAuthDialog";
 import {
+  friendlyAuthErrorMessage,
+  validateAuthEmail,
+  validateAuthPassword,
+  type AuthActionResult,
+} from "@/lib/bestie-auth-credentials";
+import {
   getAuthRedirectUrl,
   getSupabaseClient,
   isSupabaseConfigured,
@@ -32,10 +38,11 @@ type BestieAuthContextValue = {
   authOpen: boolean;
   openAuth: () => void;
   closeAuth: () => void;
-  signInWithMagicLink: (email: string) => Promise<{ ok: true } | { ok: false; message: string }>;
+  signInWithPassword: (email: string, password: string) => Promise<AuthActionResult>;
+  signUpWithPassword: (email: string, password: string) => Promise<AuthActionResult>;
+  signInWithGoogle: () => Promise<AuthActionResult>;
   signOut: () => Promise<void>;
   refreshVipFromAccount: () => Promise<void>;
-  /** Apply session after URL callback exchange (also persists email locally). */
   refreshFromCallback: (user: BestieAuthUser) => Promise<void>;
 };
 
@@ -116,21 +123,93 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
     };
   }, [applySessionUser]);
 
-  const signInWithMagicLink = useCallback(async (email: string) => {
+  const signInWithPassword = useCallback(async (emailRaw: string, password: string): Promise<AuthActionResult> => {
     const supabase = getSupabaseClient();
     if (!supabase) {
-      return { ok: false as const, message: "Supabase 尚未設定，請稍後再試。" };
+      const message = "Supabase 尚未設定，請稍後再試。";
+      toast.error(message);
+      return { ok: false, message };
     }
-    const trimmed = email.trim();
-    if (!trimmed.includes("@")) {
-      return { ok: false as const, message: "請輸入有效的 Email。" };
+    const emailCheck = validateAuthEmail(emailRaw);
+    if (!emailCheck.ok) {
+      toast.error(emailCheck.message);
+      return emailCheck;
     }
-    const { error } = await supabase.auth.signInWithOtp({
-      email: trimmed,
+    const passwordCheck = validateAuthPassword(password);
+    if (!passwordCheck.ok) {
+      toast.error(passwordCheck.message);
+      return passwordCheck;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: emailCheck.email,
+      password,
+    });
+    if (error) {
+      const message = friendlyAuthErrorMessage(error);
+      toast.error(message);
+      return { ok: false, message };
+    }
+    return { ok: true };
+  }, []);
+
+  const signUpWithPassword = useCallback(async (emailRaw: string, password: string): Promise<AuthActionResult> => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      const message = "Supabase 尚未設定，請稍後再試。";
+      toast.error(message);
+      return { ok: false, message };
+    }
+    const emailCheck = validateAuthEmail(emailRaw);
+    if (!emailCheck.ok) {
+      toast.error(emailCheck.message);
+      return emailCheck;
+    }
+    const passwordCheck = validateAuthPassword(password);
+    if (!passwordCheck.ok) {
+      toast.error(passwordCheck.message);
+      return passwordCheck;
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email: emailCheck.email,
+      password,
       options: { emailRedirectTo: getAuthRedirectUrl() },
     });
-    if (error) return { ok: false as const, message: error.message };
-    return { ok: true as const };
+    if (error) {
+      const message = friendlyAuthErrorMessage(error);
+      toast.error(message);
+      return { ok: false, message };
+    }
+    if (data.session?.user) {
+      toast.success("註冊成功，歡迎加入 Bestie！");
+      return { ok: true };
+    }
+    toast.info("註冊成功 ✉️ 請到信箱點擊驗證連結後再登入。");
+    return { ok: true };
+  }, []);
+
+  const signInWithGoogle = useCallback(async (): Promise<AuthActionResult> => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      const message = "Supabase 尚未設定，請稍後再試。";
+      toast.error(message);
+      return { ok: false, message };
+    }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: getAuthRedirectUrl(),
+      },
+    });
+    if (error) {
+      console.error("Google 登入失敗:", error.message);
+      const message = friendlyAuthErrorMessage(error);
+      toast.error(message);
+      return { ok: false, message };
+    }
+    return { ok: true };
   }, []);
 
   const signOut = useCallback(async () => {
@@ -150,7 +229,9 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
       authOpen,
       openAuth: () => setAuthOpen(true),
       closeAuth: () => setAuthOpen(false),
-      signInWithMagicLink,
+      signInWithPassword,
+      signUpWithPassword,
+      signInWithGoogle,
       signOut,
       refreshVipFromAccount,
       refreshFromCallback,
@@ -160,7 +241,9 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
       loading,
       user,
       authOpen,
-      signInWithMagicLink,
+      signInWithPassword,
+      signUpWithPassword,
+      signInWithGoogle,
       signOut,
       refreshVipFromAccount,
       refreshFromCallback,
@@ -171,7 +254,13 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
     <BestieAuthContext.Provider value={value}>
       {children}
       {configured && (
-        <BestieAuthDialog open={authOpen} onOpenChange={setAuthOpen} onMagicLink={signInWithMagicLink} />
+        <BestieAuthDialog
+          open={authOpen}
+          onOpenChange={setAuthOpen}
+          onSignIn={signInWithPassword}
+          onSignUp={signUpWithPassword}
+          onGoogleSignIn={signInWithGoogle}
+        />
       )}
     </BestieAuthContext.Provider>
   );

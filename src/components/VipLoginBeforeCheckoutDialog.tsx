@@ -1,45 +1,28 @@
-import { useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Loader2, Mail, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Mail, X } from "lucide-react";
+import { BestieEmailPasswordAuthForm } from "@/components/BestieEmailPasswordAuthForm";
+import type { AuthActionResult } from "@/lib/bestie-auth-credentials";
 import { cn } from "@/lib/utils";
 
 type VipLoginBeforeCheckoutDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   loginHint: string;
-  onMagicLink: (email: string) => Promise<{ ok: true } | { ok: false; message: string }>;
+  onSignIn: (email: string, password: string) => Promise<AuthActionResult>;
+  onSignUp: (email: string, password: string) => Promise<AuthActionResult>;
+  onGoogleSignIn: () => Promise<AuthActionResult>;
 };
 
 export function VipLoginBeforeCheckoutDialog({
   open,
   onOpenChange,
   loginHint,
-  onMagicLink,
+  onSignIn,
+  onSignUp,
+  onGoogleSignIn,
 }: VipLoginBeforeCheckoutDialogProps) {
-  const [email, setEmail] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [magicSent, setMagicSent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const reset = () => {
-    setError(null);
-    setMagicSent(false);
-    setBusy(false);
-  };
-
   return (
-    <DialogPrimitive.Root
-      open={open}
-      onOpenChange={(next) => {
-        onOpenChange(next);
-        if (!next) {
-          reset();
-          setEmail("");
-        }
-      }}
-    >
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay
           className={cn(
@@ -72,49 +55,19 @@ export function VipLoginBeforeCheckoutDialog({
               <p className="rounded-2xl border border-amber-200/60 bg-amber-50/60 px-3 py-2.5 text-[13px] text-amber-950 dark:border-amber-500/25 dark:bg-amber-950/35 dark:text-amber-100">
                 {loginHint}
               </p>
-              <p>請輸入 Email 寄送登入連結。完成後會自動帶你到 Stripe 付款，並綁定 VIP 到呢個帳號。</p>
+              <p>請使用 Email 與密碼登入或註冊。完成後會自動帶你到 Stripe 付款，並綁定 VIP 到呢個帳號。</p>
             </DialogPrimitive.Description>
           </div>
 
-          <div className="mt-4 flex flex-col gap-3">
-            {magicSent ? (
-              <p className="rounded-2xl border border-violet-200/60 bg-violet-50/50 px-3 py-3 text-center text-sm leading-relaxed text-violet-950 dark:border-violet-800/40 dark:bg-violet-950/40 dark:text-violet-100">
-                登入連結已寄出 ✉️ 請到信箱點擊連結；返回 App 後會自動前往 Stripe 付款。
-              </p>
-            ) : (
-              <>
-                <Input
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={busy}
-                  className="h-11 rounded-2xl text-center"
-                />
-                {error && <p className="text-xs text-destructive">{error}</p>}
-                <Button
-                  type="button"
-                  className="h-11 w-full rounded-2xl"
-                  disabled={busy || !email.trim().includes("@")}
-                  onClick={async () => {
-                    setBusy(true);
-                    setError(null);
-                    const result = await onMagicLink(email.trim());
-                    setBusy(false);
-                    if (!result.ok) {
-                      setError(result.message);
-                      return;
-                    }
-                    setMagicSent(true);
-                  }}
-                >
-                  {busy ? <Loader2 className="size-4 animate-spin" /> : "寄送登入連結到 Email"}
-                </Button>
-              </>
-            )}
-          </div>
+          <BestieEmailPasswordAuthForm
+            className="mt-4"
+            centered
+            onSignIn={onSignIn}
+            onSignUp={onSignUp}
+            onGoogleSignIn={onGoogleSignIn}
+            submitSignInLabel="登入並前往付款"
+            submitSignUpLabel="註冊並前往付款"
+          />
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

@@ -54,7 +54,7 @@ export function mapSupabaseUser(
   return { id: user.id, email: user.email ?? null, created_at: user.created_at ?? null };
 }
 
-/** Canonical site origin for Magic Link redirects (must match Supabase allowlist). */
+/** Canonical site origin for auth redirects (must match Supabase allowlist). */
 export function getAppOrigin(): string {
   const configured = import.meta.env.VITE_APP_URL?.trim();
   if (configured) {

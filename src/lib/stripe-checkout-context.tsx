@@ -23,14 +23,13 @@ import {
 } from "@/lib/vip-checkout-after-login";
 
 type StripeCheckoutContextValue = {
-  /** Block Stripe until Bestie Email session exists; opens login dialog if needed. */
   startVipCheckout: () => void;
 };
 
 const StripeCheckoutContext = createContext<StripeCheckoutContextValue | null>(null);
 
 export function StripeCheckoutProvider({ children }: { children: ReactNode }) {
-  const { user, loading, signInWithMagicLink } = useBestieAuth();
+  const { user, loading, signInWithPassword, signUpWithPassword, signInWithGoogle } = useBestieAuth();
   const { closePreferences } = useAppSettings();
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const pendingAfterLoginRef = useRef(false);
@@ -63,13 +62,38 @@ export function StripeCheckoutProvider({ children }: { children: ReactNode }) {
         redirectToStripeCheckout(gate.email);
         return;
       }
-      // User has not left for Stripe yet — drop stale pending so login return cannot grant VIP.
       clearStripeCheckoutPending();
       pendingAfterLoginRef.current = true;
       markVipCheckoutResumeAfterLogin();
       setLoginPromptOpen(true);
     })();
   }, [closePreferences, loading]);
+
+  const wrapAuthForCheckout = useCallback(
+    (action: (email: string, password: string) => ReturnType<typeof signInWithPassword>) =>
+      async (email: string, password: string) => {
+        pendingAfterLoginRef.current = true;
+        markVipCheckoutResumeAfterLogin();
+        const result = await action(email, password);
+        if (!result.ok) {
+          pendingAfterLoginRef.current = false;
+          consumeVipCheckoutResumeAfterLogin();
+        }
+        return result;
+      },
+    [],
+  );
+
+  const googleSignInForCheckout = useCallback(async () => {
+    pendingAfterLoginRef.current = true;
+    markVipCheckoutResumeAfterLogin();
+    const result = await signInWithGoogle();
+    if (!result.ok) {
+      pendingAfterLoginRef.current = false;
+      consumeVipCheckoutResumeAfterLogin();
+    }
+    return result;
+  }, [signInWithGoogle]);
 
   return (
     <StripeCheckoutContext.Provider value={{ startVipCheckout }}>
@@ -84,16 +108,9 @@ export function StripeCheckoutProvider({ children }: { children: ReactNode }) {
           }
         }}
         loginHint={VIP_CHECKOUT_LOGIN_REQUIRED_MESSAGE}
-        onMagicLink={async (email) => {
-          pendingAfterLoginRef.current = true;
-          markVipCheckoutResumeAfterLogin();
-          const result = await signInWithMagicLink(email);
-          if (!result.ok) {
-            pendingAfterLoginRef.current = false;
-            consumeVipCheckoutResumeAfterLogin();
-          }
-          return result;
-        }}
+        onSignIn={wrapAuthForCheckout(signInWithPassword)}
+        onSignUp={wrapAuthForCheckout(signUpWithPassword)}
+        onGoogleSignIn={googleSignInForCheckout}
       />
     </StripeCheckoutContext.Provider>
   );
