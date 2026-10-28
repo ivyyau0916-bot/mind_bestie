@@ -21,10 +21,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { useAppSettings } from "@/lib/app-settings-context";
-import {
-  cancelSubscriptionAtPeriodEnd,
-  openManageSubscriptionPortal,
-} from "@/lib/stripe-subscription-manage";
+import { openManageSubscriptionPortal } from "@/lib/stripe-subscription-manage";
 import { useStripeCheckout } from "@/lib/stripe-checkout-context";
 import { resetAllUserAppData } from "@/lib/app-data-reset";
 import { normalizeUserName } from "@/lib/bestie-account";
@@ -80,7 +77,6 @@ export function BestiePreferencesSheet() {
   const [personaLockOpen, setPersonaLockOpen] = useState(false);
   const [clearChatConfirmOpen, setClearChatConfirmOpen] = useState(false);
   const [clearAllConfirmOpen, setClearAllConfirmOpen] = useState(false);
-  const [cancelRenewalOpen, setCancelRenewalOpen] = useState(false);
   const [subscriptionBusy, setSubscriptionBusy] = useState(false);
   const [morningNotif, setMorningNotif] = useState(true);
   const [eveningNotif, setEveningNotif] = useState(true);
@@ -300,18 +296,9 @@ export function BestiePreferencesSheet() {
                       管理 VIP 訂閱
                       <ExternalLink className="ml-2 size-3.5 opacity-70" aria-hidden />
                     </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      disabled={subscriptionBusy || authLoading}
-                      className="h-9 w-full rounded-2xl text-xs text-muted-foreground hover:text-foreground"
-                      onClick={() => setCancelRenewalOpen(true)}
-                    >
-                      取消自動續訂（本期結束後）
-                    </Button>
                     <p className="text-[11px] leading-relaxed text-muted-foreground">
-                      管理頁會自動帶入你目前登入的 Email（{authUser?.email ?? "請先登入"}），只需收取 Stripe
-                      驗證信即可；亦可在 App 內取消下月自動扣款。
+                      點擊後會開啟 Stripe 官方管理頁（已自動帶入登入 Email
+                      {authUser?.email ? `：${authUser.email}` : "，請先登入"}），收取驗證信後即可取消自動續訂、查看賬單或更新付款方式。
                     </p>
                   </div>
                 )}
@@ -500,48 +487,6 @@ export function BestiePreferencesSheet() {
           </div>
         </DialogPrimitive.Portal>
       </DialogPrimitive.Root>
-
-      <AlertDialog open={cancelRenewalOpen} onOpenChange={setCancelRenewalOpen}>
-        <AlertDialogContent className="max-w-sm rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>取消自動續訂？</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2 text-sm leading-relaxed">
-              <p>
-                確認後會透過 Stripe 將訂閱設為「本期結束後不再扣款」。在到期日前你仍可使用 VIP 功能。
-              </p>
-              {authUser?.email && (
-                <p className="text-xs text-muted-foreground">帳號：{authUser.email}</p>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
-            <AlertDialogCancel autoFocus className="mt-0 w-full rounded-2xl">
-              保留續訂
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="w-full rounded-2xl"
-              onClick={() => {
-                void (async () => {
-                  setCancelRenewalOpen(false);
-                  setSubscriptionBusy(true);
-                  const result = await cancelSubscriptionAtPeriodEnd();
-                  setSubscriptionBusy(false);
-                  if (result.ok) toast.success(result.message ?? "已取消自動續訂");
-                  else {
-                    toast.error(result.message);
-                    if (result.message.includes("尚未部署")) {
-                      const portal = await openManageSubscriptionPortal();
-                      if (portal.message) toast.info(portal.message);
-                    }
-                  }
-                })();
-              }}
-            >
-              確認取消自動續訂
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <VipUnlockDialog open={vipOpen} onOpenChange={setVipOpen} title="升級 VIP 陪伴計劃" />
       <DailyCardPersonaLockDialog open={personaLockOpen} onOpenChange={setPersonaLockOpen} />
