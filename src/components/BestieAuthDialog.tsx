@@ -1,3 +1,4 @@
+import { BestieAppLogo } from "@/components/BestieAppLogo";
 import { BestieEmailPasswordAuthForm } from "@/components/BestieEmailPasswordAuthForm";
 import {
   Dialog,
@@ -33,6 +34,7 @@ export function BestieAuthDialog({
         )}
       >
         <DialogHeader className="items-center text-center">
+          <BestieAppLogo size="lg" className="mx-auto justify-center" />
           <DialogTitle className="font-display text-xl tracking-wide">登入心事 Bestie</DialogTitle>
           <DialogDescription className="text-sm leading-relaxed">
             使用 Email 與密碼或 Google 登入，即可同步 VIP 會員權限；傾訴內容仍保存在本機。

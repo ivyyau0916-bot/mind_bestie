@@ -39,7 +39,7 @@ async function maybeShow(slot) {
     await self.registration.showNotification(state.morningTitle, {
       body: state.morningBody,
       tag: `bestie-care-morning-${key}`,
-      icon: "/favicon.ico",
+      icon: "/logo.png",
     });
     state.lastMorning = key;
     return;
@@ -50,7 +50,7 @@ async function maybeShow(slot) {
   await self.registration.showNotification(state.eveningTitle, {
     body: state.eveningBody,
     tag: `bestie-care-evening-${key}`,
-    icon: "/favicon.ico",
+    icon: "/logo.png",
   });
   state.lastEvening = key;
 }

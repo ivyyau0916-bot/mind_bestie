@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { StripeCheckoutConfirmDialog } from "@/components/StripeCheckoutConfirmDialog";
 import { VipCelebrationDialog } from "@/components/VipCelebrationDialog";
-import { fetchActiveAuthEmail } from "@/lib/bestie-auth-session";
+import { resolveAuthEmailForEntitlement } from "@/lib/bestie-auth-session";
 import { useBestieAuth } from "@/lib/bestie-auth-context";
 import { syncVipAfterCheckoutReturn } from "@/lib/vip-entitlement";
 import { useMood } from "@/lib/mood-store";
@@ -46,7 +46,7 @@ export function VipCheckoutCallbackListener() {
     if (authLoading || !hasLocalPaidVipProof()) return;
 
     void (async () => {
-      const email = await fetchActiveAuthEmail();
+      const email = await resolveAuthEmailForEntitlement();
       if (email) {
         await syncVipAfterCheckoutReturn(email);
       }
@@ -60,8 +60,8 @@ export function VipCheckoutCallbackListener() {
     setIsVip(true);
     toast.success(VIP_CHECKOUT_SUCCESS_TOAST, { duration: 6000 });
     void (async () => {
-      const email = await fetchActiveAuthEmail();
-      await syncVipAfterCheckoutReturn(email);
+      const email = await resolveAuthEmailForEntitlement();
+      if (email) await syncVipAfterCheckoutReturn(email);
       await refreshVipFromAccount();
     })();
     setCelebrateOpen(true);

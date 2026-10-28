@@ -1,4 +1,7 @@
 -- Run in Supabase SQL Editor. Link Stripe Checkout customer email to VIP rows (webhook or manual).
+-- VIP is keyed by email (not auth.users.id) so Google OAuth and Email+Password share one row.
+-- In Supabase Dashboard → Authentication → Providers, enable automatic identity linking for same email when possible.
+-- One-time normalize legacy rows: update public.vip_members set email = lower(email) where email <> lower(email);
 
 create table if not exists public.vip_members (
   email text primary key,

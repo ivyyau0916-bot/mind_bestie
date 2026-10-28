@@ -25,8 +25,8 @@ export async function fetchVipEntitlementByEmail(email: string | null | undefine
   const normalized = normalizeEntitlementEmail(email);
   const { data, error } = await supabase
     .from("vip_members")
-    .select("active")
-    .eq("email", normalized)
+    .select("active, email")
+    .ilike("email", normalized)
     .maybeSingle();
 
   if (error) {
@@ -34,6 +34,15 @@ export async function fetchVipEntitlementByEmail(email: string | null | undefine
     return false;
   }
   return Boolean(data?.active);
+}
+
+/**
+ * Bind VIP row to the signed-in email (PK = email). Safe when Google and Email+Password
+ * auth produce different `user.id` values for the same mailbox.
+ */
+export async function mergeVipMemberRecordForAuthEmail(email: string | null | undefined): Promise<boolean> {
+  if (!hasCheckoutEmailForEntitlement(email) || !isSupabaseConfigured()) return false;
+  return upsertVipMemberForEmail(normalizeEntitlementEmail(email));
 }
 
 /**
@@ -76,37 +85,51 @@ export async function syncVipAfterCheckoutReturn(email: string | null | undefine
  * Session VIP sync: Supabase entitlement, Stripe ?success=true return, or verified local paid flag.
  * Magic Link alone never sets VIP (no paid proof).
  */
+function persistLocalPaidVipProof(): void {
+  try {
+    localStorage.setItem(VIP_PAID_LOCALLY_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Activate local VIP flags after email-scoped entitlement is confirmed or merged. */
+async function grantVipForEntitledEmail(normalizedEmail: string): Promise<boolean> {
+  activateVipMembership();
+  persistLocalPaidVipProof();
+  await mergeVipMemberRecordForAuthEmail(normalizedEmail);
+  return true;
+}
+
 export async function applyVipEntitlementForSession(
   email: string | null | undefined,
 ): Promise<boolean> {
+  const normalizedEmail = email?.trim().includes("@") ? normalizeEntitlementEmail(email) : null;
+
   if (typeof window !== "undefined" && hasStripeSuccessInUrl()) {
     activateVipFromStripeSuccessUrl();
-    if (hasCheckoutEmailForEntitlement(email)) {
-      await upsertVipMemberForEmail(email);
+    if (normalizedEmail) {
+      await mergeVipMemberRecordForAuthEmail(normalizedEmail);
     }
     return true;
   }
 
-  if (!hasCheckoutEmailForEntitlement(email)) {
+  if (!normalizedEmail) {
     if (hasLocalPaidVipProof()) return true;
     clearVipMembership();
     clearStripeCheckoutPending();
     return false;
   }
 
-  const entitled = await fetchVipEntitlementByEmail(email);
+  const entitled = await fetchVipEntitlementByEmail(normalizedEmail);
   if (entitled) {
-    activateVipMembership();
-    try {
-      localStorage.setItem(VIP_PAID_LOCALLY_KEY, "1");
-    } catch {
-      /* ignore */
-    }
-    return true;
+    return grantVipForEntitledEmail(normalizedEmail);
   }
 
   if (hasLocalPaidVipProof()) {
-    await syncVipAfterCheckoutReturn(email);
+    await syncVipAfterCheckoutReturn(normalizedEmail);
+    activateVipMembership();
+    persistLocalPaidVipProof();
     return true;
   }
 

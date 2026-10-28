@@ -3,10 +3,10 @@ import { useCallback, useEffect, useRef, useState, type TransitionEvent } from "
 import { toast } from "sonner";
 import {
   DailyCardBackOrnament,
-  DailyCardInspirationMark,
   DailyCardStarDivider,
   formatSoulInsight,
 } from "@/components/daily-card/DailyCardVisuals";
+import { BestieAppBrandLine } from "@/components/BestieAppLogo";
 import { DailyCardPersonaPicker } from "@/components/daily-card/DailyCardPersonaPicker";
 import { SoulCardSavePreviewDialog } from "@/components/daily-card/SoulCardSavePreviewDialog";
 import {
@@ -182,10 +182,7 @@ function DailyCardPage() {
 
       <div className="relative z-10 mb-2 flex w-full max-w-sm shrink-0 flex-col gap-2 pr-10">
         <header className="text-center">
-          <p className="flex items-center justify-center gap-1.5 text-[11px] tracking-[0.2em] text-muted-foreground">
-            <DailyCardInspirationMark className="size-4 shrink-0 text-violet-400/85 dark:text-indigo-300/75" />
-            <span>心事 Bestie</span>
-          </p>
+          <BestieAppBrandLine />
           <h1 className="mt-0.5 font-display text-xl font-bold tracking-wide text-stone-800 dark:text-stone-100 sm:text-2xl">
             靈魂抽卡治療室
           </h1>

@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { DailyCardInspirationMark } from "@/components/daily-card/DailyCardVisuals";
+import { BestieAppLogo } from "@/components/BestieAppLogo";
 import { normalizeUserName } from "@/lib/bestie-account";
 
 type BestieOnboardingDialogProps = {
@@ -32,7 +32,7 @@ export function BestieOnboardingDialog({ onComplete }: BestieOnboardingDialogPro
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader className="items-center text-center">
-          <DailyCardInspirationMark className="mx-auto size-10 text-violet-400/90 dark:text-violet-300/80" />
+          <BestieAppLogo size="lg" className="mx-auto justify-center" />
           <DialogTitle className="font-display text-xl tracking-wide">歡迎來到心事 Bestie</DialogTitle>
           <DialogDescription asChild>
             <div className="space-y-3 text-left text-sm leading-relaxed text-muted-foreground">

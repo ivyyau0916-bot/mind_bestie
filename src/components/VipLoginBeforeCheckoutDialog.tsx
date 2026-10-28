@@ -1,5 +1,6 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Mail, X } from "lucide-react";
+import { X } from "lucide-react";
+import { BestieAppLogo } from "@/components/BestieAppLogo";
 import { BestieEmailPasswordAuthForm } from "@/components/BestieEmailPasswordAuthForm";
 import type { AuthActionResult } from "@/lib/bestie-auth-credentials";
 import { cn } from "@/lib/utils";
@@ -48,7 +49,7 @@ export function VipLoginBeforeCheckoutDialog({
               className="mb-3 flex size-12 items-center justify-center rounded-full bg-violet-100/80 dark:bg-violet-950/50"
               aria-hidden
             >
-              <Mail className="size-5 text-violet-600 dark:text-violet-300" />
+              <BestieAppLogo size="md" />
             </div>
             <DialogPrimitive.Title className="font-display text-lg">登入 Email 帳號</DialogPrimitive.Title>
             <DialogPrimitive.Description className="mt-2 space-y-2 text-sm leading-relaxed text-muted-foreground">

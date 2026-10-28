@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DailyCardInspirationMark } from "@/components/daily-card/DailyCardVisuals";
+import { BestieAppBrandLine } from "@/components/BestieAppLogo";
 import { PersonaAvatar } from "@/components/PersonaAvatar";
 import { SelfCareCalendar } from "@/components/self-care/SelfCareCalendar";
 import { SelfCareDayFootprint } from "@/components/self-care/SelfCareDayFootprint";
@@ -267,10 +267,7 @@ function SelfCareCheckInPage() {
       />
 
       <header className="relative z-10 w-full max-w-sm shrink-0 pr-10 text-center">
-        <p className="flex items-center justify-center gap-1.5 text-[11px] tracking-[0.2em] text-muted-foreground">
-          <DailyCardInspirationMark className="size-4 shrink-0 text-violet-400/85 dark:text-indigo-300/75" />
-          <span>心事 Bestie</span>
-        </p>
+        <BestieAppBrandLine />
         <h1 className="mt-0.5 font-display text-xl font-bold tracking-wide text-stone-800 dark:text-stone-100 sm:text-2xl">
           每日微光打卡
         </h1>

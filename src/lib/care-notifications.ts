@@ -170,7 +170,7 @@ export function showCareNotification(slot: CareNotifSlot) {
     new Notification(payload.title, {
       body: payload.body,
       tag: `${payload.tag}-${dateKey}`,
-      icon: "/favicon.ico",
+      icon: "/logo.png",
     });
     markNotifFired(slot, dateKey);
     void pushStateToServiceWorker();

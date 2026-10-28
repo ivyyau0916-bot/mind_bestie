@@ -27,6 +27,7 @@ import {
   readPersistedAuthUser,
   writePersistedAuthUser,
 } from "@/lib/supabase-auth-callback";
+import { resolveAuthEmailForEntitlement } from "@/lib/bestie-auth-session";
 import { applyVipEntitlementForSession } from "@/lib/vip-entitlement";
 import { clearVipMembership } from "@/lib/vip-subscription";
 import { useMood } from "@/lib/mood-store";
@@ -56,7 +57,8 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
   const [authOpen, setAuthOpen] = useState(false);
 
   const syncVipAfterAuth = useCallback(
-    async (email: string | null | undefined) => {
+    async (fallbackEmail?: string | null) => {
+      const email = await resolveAuthEmailForEntitlement(fallbackEmail);
       const entitled = await applyVipEntitlementForSession(email);
       setIsVip(entitled);
     },
@@ -81,8 +83,7 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
   );
 
   const refreshVipFromAccount = useCallback(async () => {
-    const email = readPersistedAuthUser()?.email ?? user?.email;
-    await syncVipAfterAuth(email ?? null);
+    await syncVipAfterAuth(user?.email ?? readPersistedAuthUser()?.email ?? null);
   }, [syncVipAfterAuth, user?.email]);
 
   useEffect(() => {

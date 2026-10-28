@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { User } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { DailyCardInspirationMark } from "@/components/daily-card/DailyCardVisuals";
+import { BestieAppBrandLine } from "@/components/BestieAppLogo";
 import { PersonaAvatar } from "@/components/PersonaAvatar";
 import { SoulCardDetailDialog } from "@/components/profile/SoulCardDetailDialog";
 import { getUserCardHistory, type UserCardHistoryEntry } from "@/lib/bestie-account";
@@ -71,10 +71,7 @@ function ProfilePage() {
   return (
     <div className="relative flex h-dvh max-h-dvh w-full flex-col overflow-hidden bg-gradient-to-b from-violet-50/35 via-background to-stone-100/60 px-4 pb-[max(5rem,env(safe-area-inset-bottom))] pt-2 dark:from-violet-950/25 dark:to-stone-950/50">
       <header className="relative z-10 w-full max-w-sm shrink-0 pr-10 pt-[max(0.25rem,env(safe-area-inset-top))]">
-        <p className="flex items-center justify-center gap-1.5 text-[11px] tracking-[0.2em] text-muted-foreground">
-          <DailyCardInspirationMark className="size-4 shrink-0 text-violet-400/85 dark:text-indigo-300/75" />
-          <span>心事 Bestie</span>
-        </p>
+        <BestieAppBrandLine />
         <h1 className="mt-0.5 text-center font-display text-xl font-bold tracking-wide text-stone-800 dark:text-stone-100 sm:text-2xl">
           個人
         </h1>

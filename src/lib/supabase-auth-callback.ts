@@ -4,6 +4,7 @@ import { mapSupabaseUser } from "@/lib/supabase";
 
 export const AUTH_USER_ID_KEY = "bestie_auth_user_id";
 export const AUTH_USER_EMAIL_KEY = "bestie_auth_email";
+export const AUTH_USER_CREATED_AT_KEY = "bestie_auth_user_created_at";
 
 const AUTH_QUERY_KEYS = ["code", "state", "error", "error_description", "access_token", "refresh_token", "type"] as const;
 
@@ -12,7 +13,10 @@ export function readPersistedAuthUser(): BestieAuthUser | null {
   const id = localStorage.getItem(AUTH_USER_ID_KEY);
   if (!id) return null;
   const email = localStorage.getItem(AUTH_USER_EMAIL_KEY);
-  return { id, email: email || null };
+  const created_at = localStorage.getItem(AUTH_USER_CREATED_AT_KEY);
+  return created_at
+    ? { id, email: email || null, created_at }
+    : { id, email: email || null };
 }
 
 export function writePersistedAuthUser(user: BestieAuthUser | null): void {
@@ -20,11 +24,14 @@ export function writePersistedAuthUser(user: BestieAuthUser | null): void {
   if (!user) {
     localStorage.removeItem(AUTH_USER_ID_KEY);
     localStorage.removeItem(AUTH_USER_EMAIL_KEY);
+    localStorage.removeItem(AUTH_USER_CREATED_AT_KEY);
     return;
   }
   localStorage.setItem(AUTH_USER_ID_KEY, user.id);
   if (user.email) localStorage.setItem(AUTH_USER_EMAIL_KEY, user.email);
   else localStorage.removeItem(AUTH_USER_EMAIL_KEY);
+  if (user.created_at) localStorage.setItem(AUTH_USER_CREATED_AT_KEY, user.created_at);
+  else localStorage.removeItem(AUTH_USER_CREATED_AT_KEY);
 }
 
 export function hasAuthCallbackInUrl(href = typeof window !== "undefined" ? window.location.href : ""): boolean {
