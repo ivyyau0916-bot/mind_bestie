@@ -8,6 +8,7 @@ import {
   hasLocalPaidVipProof,
   hasStripeSuccessInUrl,
   hasVipPaidProofForEmail,
+  readStoredIsVip,
   readVipPaidForEmail,
   VIP_PAID_LOCALLY_KEY,
 } from "@/lib/vip-subscription";
@@ -27,14 +28,17 @@ function isMissingVipMembersTableError(error: { message?: string; code?: string 
   );
 }
 
+export type VipMemberLookupStatus = "active" | "inactive" | "unknown";
+
 /**
- * Optional server row in Supabase `vip_members` (see supabase/vip_members.sql).
- * When the table is not created yet, returns false without breaking login sync.
+ * Authoritative VIP check: Supabase `vip_members` by normalized session email (never user.id).
  */
-export async function fetchVipEntitlementByEmail(email: string | null | undefined): Promise<boolean> {
-  if (!email?.trim() || !isSupabaseConfigured()) return false;
+export async function lookupVipMemberActiveByEmail(
+  email: string | null | undefined,
+): Promise<VipMemberLookupStatus> {
+  if (!email?.trim() || !isSupabaseConfigured()) return "inactive";
   const supabase = getSupabaseClient();
-  if (!supabase) return false;
+  if (!supabase) return "unknown";
 
   const normalized = normalizeEntitlementEmail(email);
   const { data, error } = await supabase
@@ -44,12 +48,18 @@ export async function fetchVipEntitlementByEmail(email: string | null | undefine
     .maybeSingle();
 
   if (error) {
-    if (!isMissingVipMembersTableError(error)) {
-      console.warn("[vip-entitlement]", error.message);
-    }
-    return false;
+    if (isMissingVipMembersTableError(error)) return "inactive";
+    console.warn("[vip-entitlement]", error.message);
+    return "unknown";
   }
-  return Boolean(data?.active);
+  if (!data) return "inactive";
+  return data.active ? "active" : "inactive";
+}
+
+/** @deprecated Prefer lookupVipMemberActiveByEmail for explicit inactive vs network-unknown. */
+export async function fetchVipEntitlementByEmail(email: string | null | undefined): Promise<boolean> {
+  const status = await lookupVipMemberActiveByEmail(email);
+  return status === "active";
 }
 
 /**
@@ -140,9 +150,22 @@ export async function applyVipEntitlementForSession(
     return false;
   }
 
-  const entitled = await fetchVipEntitlementByEmail(normalizedEmail);
-  if (entitled) {
+  const serverStatus = await lookupVipMemberActiveByEmail(normalizedEmail);
+  if (serverStatus === "active") {
     return grantVipForEntitledEmail(normalizedEmail);
+  }
+
+  if (serverStatus === "unknown") {
+    if (hasVipPaidProofForEmail(normalizedEmail)) {
+      activateVipMembership();
+      persistLocalPaidVipProof();
+      return true;
+    }
+    if (readVipPaidForEmail() === normalizedEmail && readStoredIsVip()) {
+      activateVipMembership();
+      return true;
+    }
+    return false;
   }
 
   if (hasVipPaidProofForEmail(normalizedEmail)) {
@@ -163,4 +186,11 @@ export async function applyVipEntitlementForSession(
   clearVipMembership();
   clearStripeCheckoutPending();
   return false;
+}
+
+/** Re-fetch VIP from `vip_members` for the signed-in email (Google / Email+Password agnostic). */
+export async function syncVipEntitlementForAuthEmail(
+  email: string | null | undefined,
+): Promise<boolean> {
+  return applyVipEntitlementForSession(email);
 }

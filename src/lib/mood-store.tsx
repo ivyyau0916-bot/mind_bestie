@@ -13,7 +13,7 @@ import { readPersistedAuthUser } from "@/lib/supabase-auth-callback";
 import { isInRegistrationTrial } from "@/lib/trial-limits";
 import {
   activateVipMembership,
-  clearVipMembership,
+  clearVipSessionFlags,
   readStoredIsVip,
   readVipStartDate,
 } from "@/lib/vip-subscription";
@@ -211,7 +211,7 @@ export function MoodProvider({ children }: { children: ReactNode }) {
       const start = activateVipMembership();
       setVipStartDate(start);
     } else {
-      clearVipMembership();
+      clearVipSessionFlags();
       setVipStartDate(null);
     }
     syncUsage(vip);

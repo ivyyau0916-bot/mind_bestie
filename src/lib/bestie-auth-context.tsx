@@ -124,6 +124,12 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
     };
   }, [applySessionUser]);
 
+  useEffect(() => {
+    const onFocus = () => void syncVipAfterAuth(null);
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [syncVipAfterAuth]);
+
   const signInWithPassword = useCallback(async (emailRaw: string, password: string): Promise<AuthActionResult> => {
     const supabase = getSupabaseClient();
     if (!supabase) {
