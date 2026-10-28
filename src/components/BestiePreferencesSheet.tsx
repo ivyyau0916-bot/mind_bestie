@@ -1,6 +1,6 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Bell, Crown, MessageSquareOff, Moon, Phone, Shield, Sun, Trash2, X } from "lucide-react";
+import { Bell, Crown, ExternalLink, MessageSquareOff, Moon, Phone, Shield, Sun, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { DailyCardPersonaPicker } from "@/components/daily-card/DailyCardPersonaPicker";
 import { DailyCardPersonaLockDialog } from "@/components/DailyCardPersonaLockDialog";
@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
 import { useAppSettings } from "@/lib/app-settings-context";
+import { STRIPE_CUSTOMER_PORTAL_URL } from "@/lib/stripe-checkout";
 import { useStripeCheckout } from "@/lib/stripe-checkout-context";
 import { resetAllUserAppData } from "@/lib/app-data-reset";
 import { normalizeUserName } from "@/lib/bestie-account";
@@ -270,6 +271,28 @@ export function BestiePreferencesSheet() {
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                   {isVip ? vipBenefitCopy : freeAccountStatus?.quotaLine}
                 </p>
+                {isVip && (
+                  <div className="mt-3 space-y-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-10 w-full rounded-2xl border-stone-300/60 text-sm font-medium dark:border-stone-600/50"
+                      asChild
+                    >
+                      <a
+                        href={STRIPE_CUSTOMER_PORTAL_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        管理 VIP 訂閱
+                        <ExternalLink className="ml-2 size-3.5 opacity-70" aria-hidden />
+                      </a>
+                    </Button>
+                    <p className="text-[11px] leading-relaxed text-muted-foreground">
+                      點擊可前往 Stripe 官方頁面檢視賬單紀錄或變更訂閱狀態。
+                    </p>
+                  </div>
+                )}
                 {!isVip && freeAccountStatus && (
                   <>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{freeAccountStatus.footnote}</p>

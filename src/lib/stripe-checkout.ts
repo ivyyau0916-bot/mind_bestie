@@ -2,6 +2,10 @@ import { markStripeCheckoutPending } from "@/lib/vip-subscription";
 
 export const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/7sY4gy1AH48q21X2hQ2Ji01";
 
+/** Stripe Customer Portal — manage billing / cancel subscription. */
+export const STRIPE_CUSTOMER_PORTAL_URL =
+  "https://billing.stripe.com/p/login/5kQ28q7Z55cubCx6y62Ji00";
+
 export function getStripePaymentLink(): string {
   const fromEnv = import.meta.env.VITE_STRIPE_PAYMENT_LINK?.trim();
   return fromEnv || STRIPE_PAYMENT_LINK;
