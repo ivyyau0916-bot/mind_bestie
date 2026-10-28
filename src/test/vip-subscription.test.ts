@@ -14,7 +14,12 @@ import {
   readVipStartDate,
   resolveVipActive,
 } from "@/lib/vip-subscription";
-import { STRIPE_PAYMENT_LINK, buildStripeCheckoutUrl, getStripePaymentLink } from "@/lib/stripe-checkout";
+import {
+  STRIPE_PAYMENT_LINK,
+  buildStripeCheckoutUrl,
+  buildStripeCustomerPortalUrl,
+  getStripePaymentLink,
+} from "@/lib/stripe-checkout";
 
 describe("VIP subscription storage", () => {
   beforeEach(() => {
@@ -103,6 +108,11 @@ describe("VIP subscription storage", () => {
 
   it("appends prefilled_email for Stripe checkout when user is logged in", () => {
     const url = buildStripeCheckoutUrl("ivy@example.com");
+    expect(url).toContain("prefilled_email=ivy%40example.com");
+  });
+
+  it("appends prefilled_email for Stripe customer portal login", () => {
+    const url = buildStripeCustomerPortalUrl("ivy@example.com");
     expect(url).toContain("prefilled_email=ivy%40example.com");
   });
 });
