@@ -300,6 +300,9 @@ export function BestiePreferencesSheet() {
                       點擊後會開啟 Stripe 官方管理頁（已自動帶入登入 Email
                       {authUser?.email ? `：${authUser.email}` : "，請先登入"}），收取驗證信後即可取消自動續訂、查看賬單或更新付款方式。
                     </p>
+                    <p className="rounded-2xl border border-violet-200/45 bg-violet-50/50 px-3 py-2 text-[11px] leading-relaxed text-violet-950/90 dark:border-violet-500/20 dark:bg-violet-950/25 dark:text-violet-100/90">
+                      💡 提示：點擊後 Stripe 會寄送驗證信至你的 Email。若在收件箱未看到，請檢查「垃圾郵件箱（Spam）」，並可將 Stripe 設為「非垃圾郵件」以便日後接收通知。
+                    </p>
                   </div>
                 )}
                 {!isVip && freeAccountStatus && (
