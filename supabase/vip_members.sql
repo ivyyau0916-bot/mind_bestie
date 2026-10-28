@@ -10,6 +10,10 @@ create table if not exists public.vip_members (
   updated_at timestamptz not null default now()
 );
 
+-- If you already created the table with `is_active` instead of `active`, either:
+-- alter table public.vip_members rename column is_active to active;
+-- or keep is_active — the app reads both `is_active` and `active`.
+
 alter table public.vip_members enable row level security;
 
 create policy "Users read own VIP row"

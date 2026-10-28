@@ -57,9 +57,11 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
   const [authOpen, setAuthOpen] = useState(false);
 
   const syncVipAfterAuth = useCallback(
-    async (fallbackEmail?: string | null) => {
+    async (fallbackEmail?: string | null, reason = "auth-sync") => {
       const email = await resolveAuthEmailForEntitlement(fallbackEmail);
+      console.log("[auth] syncVipAfterAuth", { reason, resolvedEmail: email });
       const entitled = await applyVipEntitlementForSession(email);
+      console.log("[auth] syncVipAfterAuth result", { entitled });
       setIsVip(entitled);
     },
     [setIsVip],
@@ -69,7 +71,7 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
     async (next: BestieAuthUser | null, options?: { closeAuthDialog?: boolean }) => {
       setUser(next);
       writePersistedAuthUser(next);
-      await syncVipAfterAuth(next?.email ?? null);
+      await syncVipAfterAuth(next?.email ?? null, "applySessionUser");
       if (options?.closeAuthDialog) setAuthOpen(false);
     },
     [syncVipAfterAuth],
@@ -112,6 +114,11 @@ export function BestieAuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       const mapped = mapSupabaseUser(session?.user ?? null);
+      console.log("[auth] onAuthStateChange", {
+        event,
+        sessionEmail: session?.user?.email ?? null,
+        userId: session?.user?.id ?? null,
+      });
       void applySessionUser(mapped, { closeAuthDialog: event === "SIGNED_IN" });
       if (event === "SIGNED_IN" && mapped?.email) {
         toast.success(`已登入：${mapped.email}`);

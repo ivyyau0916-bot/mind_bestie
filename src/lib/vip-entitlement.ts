@@ -1,4 +1,12 @@
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
+
+async function readSessionEmailForVipDebug(): Promise<string | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase?.auth?.getSession) return null;
+  const { data } = await supabase.auth.getSession();
+  const email = data.session?.user?.email?.trim();
+  return email?.includes("@") ? email : null;
+}
 import {
   activateVipFromStripeSuccessUrl,
   activateVipMembership,
@@ -30,6 +38,20 @@ function isMissingVipMembersTableError(error: { message?: string; code?: string 
 
 export type VipMemberLookupStatus = "active" | "inactive" | "unknown";
 
+type VipMemberRow = {
+  email?: string | null;
+  active?: boolean | null;
+  is_active?: boolean | null;
+};
+
+/** Supports repo schema (`active`) and dashboards that use `is_active`. */
+export function isVipMemberRowActive(row: VipMemberRow | null | undefined): boolean {
+  if (!row) return false;
+  if (typeof row.is_active === "boolean") return row.is_active;
+  if (typeof row.active === "boolean") return row.active;
+  return false;
+}
+
 /**
  * Authoritative VIP check: Supabase `vip_members` by normalized session email (never user.id).
  */
@@ -41,19 +63,34 @@ export async function lookupVipMemberActiveByEmail(
   if (!supabase) return "unknown";
 
   const normalized = normalizeEntitlementEmail(email);
+  const sessionEmail = await readSessionEmailForVipDebug();
+
   const { data, error } = await supabase
     .from("vip_members")
-    .select("active, email")
+    .select("*")
     .ilike("email", normalized)
     .maybeSingle();
+
+  const row = data as VipMemberRow | null;
+  const rowActive = isVipMemberRowActive(row);
+
+  console.log("[vip-entitlement] vip_members lookup", {
+    sessionEmail,
+    lookupEmail: normalized,
+    row: row ?? null,
+    is_active: row?.is_active,
+    active: row?.active,
+    rowActive,
+    error: error?.message ?? null,
+  });
 
   if (error) {
     if (isMissingVipMembersTableError(error)) return "inactive";
     console.warn("[vip-entitlement]", error.message);
     return "unknown";
   }
-  if (!data) return "inactive";
-  return data.active ? "active" : "inactive";
+  if (!row) return "inactive";
+  return rowActive ? "active" : "inactive";
 }
 
 /** @deprecated Prefer lookupVipMemberActiveByEmail for explicit inactive vs network-unknown. */
@@ -81,22 +118,24 @@ export async function upsertVipMemberForEmail(email: string | null | undefined):
   if (!supabase) return false;
 
   const normalized = normalizeEntitlementEmail(email);
-  const { error } = await supabase.from("vip_members").upsert(
-    {
-      email: normalized,
-      active: true,
-      updated_at: new Date().toISOString(),
-    },
+  const updated_at = new Date().toISOString();
+  const withIsActive = await supabase.from("vip_members").upsert(
+    { email: normalized, is_active: true, updated_at },
     { onConflict: "email" },
   );
+  if (!withIsActive.error) return true;
 
-  if (error) {
-    if (!isMissingVipMembersTableError(error)) {
-      console.warn("[vip-entitlement] upsert failed", error.message);
-    }
-    return false;
+  const withActive = await supabase.from("vip_members").upsert(
+    { email: normalized, active: true, updated_at },
+    { onConflict: "email" },
+  );
+  if (!withActive.error) return true;
+
+  const err = withActive.error ?? withIsActive.error;
+  if (err && !isMissingVipMembersTableError(err)) {
+    console.warn("[vip-entitlement] upsert failed", err.message);
   }
-  return true;
+  return false;
 }
 
 function hasCheckoutEmailForEntitlement(email: string | null | undefined): email is string {
@@ -133,7 +172,16 @@ async function grantVipForEntitledEmail(normalizedEmail: string): Promise<boolea
 export async function applyVipEntitlementForSession(
   email: string | null | undefined,
 ): Promise<boolean> {
-  const normalizedEmail = email?.trim().includes("@") ? normalizeEntitlementEmail(email) : null;
+  const sessionEmail = await readSessionEmailForVipDebug();
+  const normalizedEmail = email?.trim().includes("@")
+    ? normalizeEntitlementEmail(email)
+    : sessionEmail;
+
+  console.log("[vip-entitlement] applyVipEntitlementForSession", {
+    sessionEmail,
+    argumentEmail: email ?? null,
+    normalizedEmail,
+  });
 
   if (typeof window !== "undefined" && hasStripeSuccessInUrl()) {
     activateVipFromStripeSuccessUrl();
@@ -151,8 +199,15 @@ export async function applyVipEntitlementForSession(
   }
 
   const serverStatus = await lookupVipMemberActiveByEmail(normalizedEmail);
+  console.log("[vip-entitlement] serverStatus", { normalizedEmail, serverStatus });
+
   if (serverStatus === "active") {
-    return grantVipForEntitledEmail(normalizedEmail);
+    const granted = await grantVipForEntitledEmail(normalizedEmail);
+    console.log("[vip-entitlement] VIP granted from vip_members", {
+      email: normalizedEmail,
+      isVIP: localStorage.getItem("isVIP"),
+    });
+    return granted;
   }
 
   if (serverStatus === "unknown") {

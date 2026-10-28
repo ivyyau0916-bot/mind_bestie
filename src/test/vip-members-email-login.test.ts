@@ -13,7 +13,10 @@ describe("vip_members follows email across login methods", () => {
 
   it("grants VIP when vip_members.active is true for session email", async () => {
     const ilike = vi.fn().mockReturnValue({
-      maybeSingle: vi.fn().mockResolvedValue({ data: { active: true, email: "ivy@example.com" }, error: null }),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: { is_active: true, email: "ivy@example.com" },
+        error: null,
+      }),
     });
     vi.spyOn(supabaseModule, "isSupabaseConfigured").mockReturnValue(true);
     vi.spyOn(supabaseModule, "getSupabaseClient").mockReturnValue({
