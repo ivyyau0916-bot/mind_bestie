@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
-import { User } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { BestieAppBrandLine } from "@/components/BestieAppLogo";
 import { PersonaAvatar } from "@/components/PersonaAvatar";
+import { ProfileAvatarEditor } from "@/components/profile/ProfileAvatarEditor";
 import { SoulCardDetailDialog } from "@/components/profile/SoulCardDetailDialog";
 import { getUserCardHistory, type UserCardHistoryEntry } from "@/lib/bestie-account";
 import { useBestieAccount } from "@/lib/bestie-account-context";
@@ -77,15 +77,7 @@ function ProfilePage() {
         </h1>
 
         <div className="mt-3 flex items-center gap-3 rounded-3xl border border-stone-200/60 bg-white/50 p-3 dark:border-stone-600/35 dark:bg-stone-900/35">
-          <div className="relative shrink-0">
-            <div className="flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-violet-200/80 to-stone-200/80 dark:from-violet-800/50 dark:to-stone-700/50">
-              <User className="size-7 text-stone-600 dark:text-stone-200" strokeWidth={1.5} aria-hidden="true" />
-            </div>
-            <PersonaAvatar
-              personaId={persona}
-              className="absolute -bottom-0.5 -right-0.5 size-7 ring-2 ring-background"
-            />
-          </div>
+          <ProfileAvatarEditor personaId={persona} className="pb-3" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold text-stone-800 dark:text-stone-100">{displayName}</p>
             {isVip && (
