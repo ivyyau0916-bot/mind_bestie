@@ -26,10 +26,13 @@ export function BestieAppLogo({
     <span className={cn("inline-flex items-center gap-1.5", className)}>
       <img
         src={APP_LOGO_SRC}
-        alt=""
+        alt={APP_NAME}
         width={512}
         height={512}
-        className={cn("shrink-0 rounded-[22%] object-cover shadow-sm", sizePx[size])}
+        className={cn(
+          "aspect-square shrink-0 rounded-[22%] object-cover object-center shadow-sm",
+          sizePx[size],
+        )}
         decoding="async"
       />
       {showName && (

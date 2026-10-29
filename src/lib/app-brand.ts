@@ -1,7 +1,9 @@
-/**
- * Brand assets live in `/public`:
- * - `logo.png` — main icon (512×512 PNG recommended)
- * - `favicon.png`, `apple-touch-icon.png` — regenerate with `sips -z` after swapping logo
- */
-export const APP_LOGO_SRC = "/logo.png";
+import appLogo from "@/assets/logo.png";
+
+/** Bundled logo for in-app UI (login, headers, onboarding). */
+export const APP_LOGO_SRC = appLogo;
+
+/** Static path in `/public` — keep in sync with `src/assets/logo.png` (favicon, og:image, push). */
+export const APP_LOGO_PUBLIC_PATH = "/logo.png";
+
 export const APP_NAME = "心事 Bestie";
