@@ -99,6 +99,11 @@ describe("Language and localization rules", () => {
     expect(refineOpenRouterReply("gentle", "返工好攰", "你咁累咗呀")).toMatch(/搞到咁攰|🫂|哎呀/);
     expect(buildOpenRouterSystemPrompt("fierce")).toMatch(/下！|下？/);
     expect(buildOpenRouterSystemPrompt("gentle", "今日老細又叫我加班，真係頂唔順！")).toMatch(/今次訊息/);
+    expect(buildOpenRouterSystemPrompt("gentle")).toMatch(/對話邏輯與專注度/);
+    expect(activeSystemPrompt("gentle")).toMatch(/答非所問/);
+    expect(
+      refineOpenRouterReply("gentle", "信用卡帳單睇完好迷惘", "別想太多，一切都会好的，加油你一定行！"),
+    ).not.toMatch(/别想太多|一切都会好/);
     expect(refineOpenRouterReply("gentle", "今日老細又叫我加班，真係頂唔順！", "相关新闻显示长期加班")).toMatch(/🫂|哎呀|OT/);
     expect(refineOpenRouterReply("fierce", "今日老細又叫我加班，真係頂唔順！", "听大姐讲")).toMatch(/下！|下？|機械人|睇唔過眼/);
     expect(refineOpenRouterReply("wise", "今日老細又叫我加班，真係頂唔順！", "下！佢咁無恥")).toMatch(/優先|OT|試下|集中/);

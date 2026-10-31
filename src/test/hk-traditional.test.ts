@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildOpenRouterSystemPrompt, containsSimplifiedChinese, refineOpenRouterReply } from "@/lib/chat-personas";
 import {
   CANTONESE_CHARACTER_USAGE_RULE,
+  CONVERSATION_FOCUS_RULE,
   fixCantoneseOrthography,
   HK_CANTONESE_ORTHography_RULE,
   HK_TRADITIONAL_STRICT_RULE,
@@ -29,6 +30,9 @@ describe("Hong Kong traditional normalization", () => {
     expect(prompt).toContain(HK_TRADITIONAL_STRICT_RULE);
     expect(prompt).toContain(HK_CANTONESE_ORTHography_RULE);
     expect(prompt).toContain(CANTONESE_CHARACTER_USAGE_RULE);
+    expect(prompt).toContain(CONVERSATION_FOCUS_RULE);
+    expect(prompt).toMatch(/答非所問/);
+    expect(prompt).toMatch(/梳理用戶.*真實意圖/);
     expect(prompt).toMatch(/問嚇.*問吓/);
     expect(prompt).toMatch(/識吓新朋友/);
     expect(prompt.endsWith(HK_TRADITIONAL_STRICT_RULE.trim())).toBe(true);
@@ -41,6 +45,9 @@ describe("Hong Kong traditional normalization", () => {
     expect(refineOpenRouterReply("gentle", "今日好攰", "你想問嚇我咩？")).toMatch(/問吓/);
     expect(fixCantoneseOrthography("試嚇先，等嚇我")).toBe("試吓先，等吓我");
     expect(fixCantoneseOrthography("嚇！真係離譜")).toBe("下！真係離譜");
+    expect(fixCantoneseOrthography("等一嚇，傾嚇先")).toBe("等一吓，傾吓先");
+    expect(fixCantoneseOrthography("佢驚嚇到，等一嚇再講")).toBe("佢驚嚇到，等一吓再講");
+    expect(fixCantoneseOrthography("唔好嚇人呀")).toBe("唔好嚇人呀");
   });
 
   it("normalizes on-model replies before persona checks (multi-turn drift)", () => {
